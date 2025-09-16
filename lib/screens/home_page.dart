@@ -84,8 +84,8 @@ class _HomePageState extends State<HomePage> {
     if (_selectedIndex == 0 || _selectedIndex == 1) {
       return FloatingActionButton(
         onPressed: _showAddOptions,
-        child: const Icon(Icons.add),
         tooltip: 'Add Transaction',
+        child: const Icon(Icons.add),
       );
     }
     return null;
