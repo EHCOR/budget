@@ -1,4 +1,5 @@
 // screens/home_page.dart
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:csv/csv.dart';
@@ -189,7 +190,7 @@ class _HomePageState extends State<HomePage> {
 
         if (result != null && result.files.single.bytes != null) {
           final bytes = result.files.single.bytes!;
-          final csvString = String.fromCharCodes(bytes);
+          final csvString = utf8.decode(bytes);
 
           _processCSVString(csvString);
         }
@@ -210,9 +211,24 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _processCSVString(String csvString) {
+    void _processCSVString(String csvString) {
+    debugPrint('--- Processing CSV String ---');
+    debugPrint(csvString);
+    debugPrint('--------------------------');
     try {
-      final csvTable = const CsvToListConverter().convert(csvString);
+      // Use a robust CSV converter
+      final csvTable = const CsvToListConverter(
+        fieldDelimiter: ",",
+        textDelimiter: '"',
+        eol: '\n',
+        allowInvalid: true, // Skip invalid rows
+        shouldParseNumbers: false, // We will parse numbers manually
+      ).convert(csvString);
+
+      debugPrint('--- CSV Table ---');
+      debugPrint(csvTable.toString());
+      debugPrint('-----------------');
+
 
       if (csvTable.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -224,6 +240,10 @@ class _HomePageState extends State<HomePage> {
       // Try to detect if first row is header
       final hasHeader = _isHeaderRow(csvTable[0]);
       final dataRows = hasHeader ? csvTable.sublist(1) : csvTable;
+
+      debugPrint('--- Data Rows ---');
+      debugPrint(dataRows.toString());
+      debugPrint('-----------------');
 
       // Parse transactions
       final transactions = <Transaction>[];

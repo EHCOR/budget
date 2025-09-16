@@ -45,18 +45,19 @@ class Transaction {
     );
   }
 
-  // Create from CSV row
   static Transaction? fromCsvRow(List<dynamic> row, {
     int dateIndex = 0,
     int descriptionIndex = 1,
     int amountIndex = 2,
   }) {
     try {
-      // Parse date (try multiple formats)
-      DateTime date;
-      String dateStr = row[dateIndex].toString().trim();
+      if (row.length <= amountIndex) {
+        return null; // Not enough columns
+      }
 
-      // Try YYYYMMDD format
+      // Parse date
+      DateTime? date;
+      String dateStr = row[dateIndex].toString().trim();
       if (dateStr.length == 8 && int.tryParse(dateStr) != null) {
         date = DateTime(
           int.parse(dateStr.substring(0, 4)),
@@ -64,7 +65,6 @@ class Transaction {
           int.parse(dateStr.substring(6, 8)),
         );
       } else {
-        // Try other common formats
         try {
           date = DateFormat('yyyy-MM-dd').parse(dateStr);
         } catch (_) {
@@ -74,27 +74,40 @@ class Transaction {
             try {
               date = DateFormat('dd/MM/yyyy').parse(dateStr);
             } catch (_) {
-              return null; // Can't parse date
             }
           }
         }
       }
+      if (date == null) {
+        return null;
+      }
 
-      // Parse amount
-      String amountStr = row[amountIndex].toString()
-          .replaceAll(RegExp(r'[^\d.-]'), ''); // Remove currency symbols
-      double amount = double.parse(amountStr);
 
-      // Get description
       String description = row[descriptionIndex].toString().trim();
 
+      // Parse amount
+      double? amount;
+      String amountStr = row[amountIndex].toString().trim();
+      try {
+        amount = double.parse(amountStr);
+      } catch (e) {
+        final numberFormat = NumberFormat("#,##0.00", "en_ZA");
+        try {
+          amount = numberFormat.parse(amountStr).toDouble();
+        } catch (e) {
+          return null;
+        }
+      }
+
+      final uniqueId = '${DateTime.now().millisecondsSinceEpoch}-${row.hashCode}';
+
       return Transaction(
+        id: uniqueId,
         date: date,
         description: description,
         amount: amount,
       );
     } catch (e) {
-      print('Error parsing CSV row: $e');
       return null;
     }
   }
