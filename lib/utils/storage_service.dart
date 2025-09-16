@@ -1,137 +1,163 @@
 // utils/storage_service.dart
 import 'dart:convert';
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/transaction.dart';
+import '../models/category.dart';
 
 class StorageService {
-  static Future<String> _getTransactionsFilePath() async {
-    final directory = await getApplicationDocumentsDirectory();
-    return '${directory.path}/transactions.json';
-  }
+  static const String _transactionsKey = 'budget_tracker_transactions';
+  static const String _categoriesKey = 'budget_tracker_categories';
+  static const String _settingsKey = 'budget_tracker_settings';
 
-  // Save transactions to a JSON file
+  // Save transactions
   static Future<void> saveTransactions(List<Transaction> transactions) async {
     try {
-      final filePath = await _getTransactionsFilePath();
-      final file = File(filePath);
-      
-      // Convert transactions to a list of JSON objects
-      final jsonData = transactions.map((t) => t.toJson()).toList();
-      
-      // Save as JSON
-      await file.writeAsString(jsonEncode(jsonData));
+      final prefs = await SharedPreferences.getInstance();
+      final json = jsonEncode(transactions.map((t) => t.toJson()).toList());
+      await prefs.setString(_transactionsKey, json);
     } catch (e) {
-      throw Exception('Failed to save transactions: $e');
+      print('Error saving transactions: $e');
     }
   }
 
-  // Load transactions from the JSON file
+  // Load transactions
   static Future<List<Transaction>> loadTransactions() async {
     try {
-      final filePath = await _getTransactionsFilePath();
-      final file = File(filePath);
-      
-      if (!await file.exists()) {
-        return [];
-      }
-      
-      final jsonString = await file.readAsString();
-      final jsonData = jsonDecode(jsonString) as List;
-      
-      return jsonData.map((json) => Transaction.fromJson(json)).toList();
+      final prefs = await SharedPreferences.getInstance();
+      final json = prefs.getString(_transactionsKey);
+      if (json == null || json.isEmpty) return [];
+
+      final list = jsonDecode(json) as List;
+      return list.map((item) => Transaction.fromJson(item)).toList();
     } catch (e) {
-      // If loading fails, return an empty list
+      print('Error loading transactions: $e');
       return [];
     }
   }
 
-  // Delete all transaction data
-  static Future<void> deleteAllTransactions() async {
+  // Save categories
+  static Future<void> saveCategories(List<Category> categories) async {
     try {
-      final filePath = await _getTransactionsFilePath();
-      final file = File(filePath);
-      
-      if (await file.exists()) {
-        await file.delete();
-      }
+      final prefs = await SharedPreferences.getInstance();
+      final json = jsonEncode(categories.map((c) => c.toJson()).toList());
+      await prefs.setString(_categoriesKey, json);
     } catch (e) {
-      throw Exception('Failed to delete transactions: $e');
+      print('Error saving categories: $e');
     }
   }
 
-  // Backup all data to a file
-  static Future<String> backupData() async {
+  // Load categories
+  static Future<List<Category>> loadCategories() async {
     try {
-      final directory = await getApplicationDocumentsDirectory();
-      final backupDir = Directory('${directory.path}/backups');
-      
-      if (!await backupDir.exists()) {
-        await backupDir.create();
+      final prefs = await SharedPreferences.getInstance();
+      final json = prefs.getString(_categoriesKey);
+      if (json == null || json.isEmpty) {
+        // Return default categories if none saved
+        return Category.getDefaultCategories();
       }
-      
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final backupPath = '${backupDir.path}/backup_$timestamp.json';
-      
-      // Copy the transactions file to the backup
-      final transactionsFile = File(await _getTransactionsFilePath());
-      if (await transactionsFile.exists()) {
-        await transactionsFile.copy(backupPath);
-      }
-      
-      return backupPath;
+
+      final list = jsonDecode(json) as List;
+      return list.map((item) => Category.fromJson(item)).toList();
     } catch (e) {
-      throw Exception('Failed to backup data: $e');
+      print('Error loading categories: $e');
+      return Category.getDefaultCategories();
     }
   }
 
-  // Restore data from a backup file
-  static Future<void> restoreFromBackup(String backupPath) async {
-    try {
-      final backupFile = File(backupPath);
-      if (!await backupFile.exists()) {
-        throw Exception('Backup file not found');
-      }
-      
-      final transactionsPath = await _getTransactionsFilePath();
-      await backupFile.copy(transactionsPath);
-    } catch (e) {
-      throw Exception('Failed to restore from backup: $e');
-    }
-  }
-  
-  // Get settings file path
-  static Future<String> _getSettingsFilePath() async {
-    final directory = await getApplicationDocumentsDirectory();
-    return '${directory.path}/settings.json';
-  }
-  
-  // Load settings
-  static Future<Map<String, dynamic>?> loadSettings() async {
-    try {
-      final filePath = await _getSettingsFilePath();
-      final file = File(filePath);
-      
-      if (!await file.exists()) {
-        return null;
-      }
-      
-      final jsonString = await file.readAsString();
-      return jsonDecode(jsonString) as Map<String, dynamic>;
-    } catch (e) {
-      return null;
-    }
-  }
-  
   // Save settings
   static Future<void> saveSettings(Map<String, dynamic> settings) async {
     try {
-      final filePath = await _getSettingsFilePath();
-      final file = File(filePath);
-      
-      await file.writeAsString(jsonEncode(settings));
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_settingsKey, jsonEncode(settings));
     } catch (e) {
-      throw Exception('Failed to save settings: $e');
+      print('Error saving settings: $e');
+    }
+  }
+
+  // Load settings
+  static Future<Map<String, dynamic>> loadSettings() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final json = prefs.getString(_settingsKey);
+      if (json == null || json.isEmpty) {
+        return {
+          'currencyCode': 'USD',
+          'currencySymbol': '\$',
+          'themeMode': 'system',
+        };
+      }
+      return jsonDecode(json) as Map<String, dynamic>;
+    } catch (e) {
+      print('Error loading settings: $e');
+      return {
+        'currencyCode': 'USD',
+        'currencySymbol': '\$',
+        'themeMode': 'system',
+      };
+    }
+  }
+
+  // Clear all data
+  static Future<void> clearAllData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_transactionsKey);
+      await prefs.remove(_categoriesKey);
+      // Keep settings
+    } catch (e) {
+      print('Error clearing data: $e');
+    }
+  }
+
+  // Export data as JSON string (for backup)
+  static Future<String> exportData() async {
+    try {
+      final transactions = await loadTransactions();
+      final categories = await loadCategories();
+      final settings = await loadSettings();
+
+      final data = {
+        'transactions': transactions.map((t) => t.toJson()).toList(),
+        'categories': categories.map((c) => c.toJson()).toList(),
+        'settings': settings,
+        'exportDate': DateTime.now().toIso8601String(),
+      };
+
+      return jsonEncode(data);
+    } catch (e) {
+      print('Error exporting data: $e');
+      return '';
+    }
+  }
+
+  // Import data from JSON string
+  static Future<bool> importData(String jsonString) async {
+    try {
+      final data = jsonDecode(jsonString) as Map<String, dynamic>;
+
+      // Import transactions
+      if (data.containsKey('transactions')) {
+        final list = data['transactions'] as List;
+        final transactions = list.map((item) => Transaction.fromJson(item)).toList();
+        await saveTransactions(transactions);
+      }
+
+      // Import categories
+      if (data.containsKey('categories')) {
+        final list = data['categories'] as List;
+        final categories = list.map((item) => Category.fromJson(item)).toList();
+        await saveCategories(categories);
+      }
+
+      // Import settings
+      if (data.containsKey('settings')) {
+        await saveSettings(data['settings'] as Map<String, dynamic>);
+      }
+
+      return true;
+    } catch (e) {
+      print('Error importing data: $e');
+      return false;
     }
   }
 }

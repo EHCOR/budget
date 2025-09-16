@@ -1,139 +1,119 @@
 // models/transaction.dart
 import 'package:intl/intl.dart';
 
-enum TransactionType { expense, income, transfer }
+enum TransactionType { income, expense }
 
 class Transaction {
+  final String id;
   final DateTime date;
   final String description;
   final double amount;
-  final double balance;
-  String category;
+  String categoryId;
   final TransactionType type;
-  final String id; // Unique identifier for transactions
 
   Transaction({
+    String? id,
     required this.date,
     required this.description,
     required this.amount,
-    this.balance = 0.0,
-    this.category = 'Uncategorized',
+    this.categoryId = 'uncategorized',
     TransactionType? type,
-    String? id,
-  }) : type =
-           type ??
-           (amount < 0 ? TransactionType.expense : TransactionType.income),
-       id =
-           id ??
-           DateTime.now().millisecondsSinceEpoch.toString() +
-               description.hashCode.toString();
+  }) : id = id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        type = type ?? (amount >= 0 ? TransactionType.income : TransactionType.expense);
 
-  // Create from CSV row data
-  factory Transaction.fromCsv(List<String> row) {
-    // Assumes format: date, description, amount, balance
-    // date format is yyyymmdd
-    DateTime date;
-    try {
-      final dateString = row[0];
-      if (dateString.length >= 8) {
-        final year = int.parse(dateString.substring(0, 4));
-        final month = int.parse(dateString.substring(4, 6));
-        final day = int.parse(dateString.substring(6, 8));
-        date = DateTime(year, month, day);
-      } else {
-        date = DateTime.now();
-      }
-    } catch (e) {
-      date = DateTime.now();
-    }
-
-    return Transaction(
-      date: date,
-      description: row[1],
-      amount: double.parse(row[2]),
-      balance: double.parse(row[3]),
-    );
-  }
-
-  // Convert to Map for storage
+  // Convert to JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'date': DateFormat('yyyyMMdd').format(date),
+      'date': date.toIso8601String(),
       'description': description,
       'amount': amount,
-      'balance': balance,
-      'category': category,
-      'type': type.toString().split('.').last, // Store enum as string
+      'categoryId': categoryId,
+      'type': type.toString().split('.').last,
     };
   }
 
-  // Create from stored JSON data
+  // Create from JSON
   factory Transaction.fromJson(Map<String, dynamic> json) {
-    DateTime date;
-    try {
-      final dateString = json['date'] as String;
-      if (dateString.length >= 8) {
-        final year = int.parse(dateString.substring(0, 4));
-        final month = int.parse(dateString.substring(4, 6));
-        final day = int.parse(dateString.substring(6, 8));
-        date = DateTime(year, month, day);
-      } else {
-        date = DateTime.now();
-      }
-    } catch (e) {
-      date = DateTime.now();
-    }
-
-    // Handle numeric conversions safely
-    double parseAmount() {
-      var amount = json['amount'];
-      if (amount is int) {
-        return amount.toDouble();
-      } else if (amount is double) {
-        return amount;
-      }
-      return 0.0;
-    }
-
-    double parseBalance() {
-      var balance = json['balance'];
-      if (balance is int) {
-        return balance.toDouble();
-      } else if (balance is double) {
-        return balance;
-      }
-      return 0.0;
-    }
-
     return Transaction(
       id: json['id'],
-      date: date,
+      date: DateTime.parse(json['date']),
       description: json['description'],
-      amount: parseAmount(),
-      balance: parseBalance(),
-      category: json['category'] ?? 'Uncategorized',
-      type: TransactionType.values.firstWhere(
-        (e) => e.toString().split('.').last == json['type'],
-        orElse:
-            () =>
-                json['amount'] < 0
-                    ? TransactionType.expense
-                    : TransactionType.income,
-      ),
+      amount: (json['amount'] as num).toDouble(),
+      categoryId: json['categoryId'] ?? 'uncategorized',
+      type: json['type'] == 'income' ? TransactionType.income : TransactionType.expense,
     );
   }
 
-  // Clone with new category
-  Transaction copyWith({String? newCategory}) {
+  // Create from CSV row
+  static Transaction? fromCsvRow(List<dynamic> row, {
+    int dateIndex = 0,
+    int descriptionIndex = 1,
+    int amountIndex = 2,
+  }) {
+    try {
+      // Parse date (try multiple formats)
+      DateTime date;
+      String dateStr = row[dateIndex].toString().trim();
+
+      // Try YYYYMMDD format
+      if (dateStr.length == 8 && int.tryParse(dateStr) != null) {
+        date = DateTime(
+          int.parse(dateStr.substring(0, 4)),
+          int.parse(dateStr.substring(4, 6)),
+          int.parse(dateStr.substring(6, 8)),
+        );
+      } else {
+        // Try other common formats
+        try {
+          date = DateFormat('yyyy-MM-dd').parse(dateStr);
+        } catch (_) {
+          try {
+            date = DateFormat('MM/dd/yyyy').parse(dateStr);
+          } catch (_) {
+            try {
+              date = DateFormat('dd/MM/yyyy').parse(dateStr);
+            } catch (_) {
+              return null; // Can't parse date
+            }
+          }
+        }
+      }
+
+      // Parse amount
+      String amountStr = row[amountIndex].toString()
+          .replaceAll(RegExp(r'[^\d.-]'), ''); // Remove currency symbols
+      double amount = double.parse(amountStr);
+
+      // Get description
+      String description = row[descriptionIndex].toString().trim();
+
+      return Transaction(
+        date: date,
+        description: description,
+        amount: amount,
+      );
+    } catch (e) {
+      print('Error parsing CSV row: $e');
+      return null;
+    }
+  }
+
+  // Copy with modifications
+  Transaction copyWith({
+    DateTime? date,
+    String? description,
+    double? amount,
+    String? categoryId,
+    TransactionType? type,
+  }) {
     return Transaction(
       id: id,
-      date: date,
-      description: description,
-      amount: amount,
-      balance: balance,
-      category: newCategory ?? category,
-      type: type,
+      date: date ?? this.date,
+      description: description ?? this.description,
+      amount: amount ?? this.amount,
+      categoryId: categoryId ?? this.categoryId,
+      type: type ?? this.type,
     );
   }
 }
