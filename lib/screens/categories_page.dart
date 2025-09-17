@@ -7,181 +7,173 @@ import '../models/category.dart';
 class CategoriesPage extends StatelessWidget {
   const CategoriesPage({super.key});
 
-  // Get all available icons for categories
-  static List<IconData> get availableIcons => [
+  // Get all available icons for categories with their names
+  static Map<String, IconData> get availableIconsMap => {
     // Food & Dining
-    Icons.restaurant,
-    Icons.local_cafe,
-    Icons.local_bar,
-    Icons.local_pizza,
-    Icons.fastfood,
-    Icons.bakery_dining,
-    Icons.lunch_dining,
-    Icons.dinner_dining,
-    Icons.breakfast_dining,
-    Icons.wine_bar,
-    Icons.local_grocery_store,
+    'restaurant': Icons.restaurant,
+    'cafe': Icons.local_cafe,
+    'bar': Icons.local_bar,
+    'pizza': Icons.local_pizza,
+    'fastfood': Icons.fastfood,
+    'bakery': Icons.bakery_dining,
+    'lunch': Icons.lunch_dining,
+    'dinner': Icons.dinner_dining,
+    'breakfast': Icons.breakfast_dining,
+    'wine': Icons.wine_bar,
+    'grocery': Icons.local_grocery_store,
 
     // Shopping
-    Icons.shopping_cart,
-    Icons.shopping_bag,
-    Icons.store,
-    Icons.local_mall,
-    Icons.storefront,
-    Icons.local_shipping,
-    Icons.shopping_basket,
+    'shopping cart': Icons.shopping_cart,
+    'shopping bag': Icons.shopping_bag,
+    'store': Icons.store,
+    'mall': Icons.local_mall,
+    'storefront': Icons.storefront,
+    'shipping': Icons.local_shipping,
+    'basket': Icons.shopping_basket,
 
     // Transportation
-    Icons.directions_car,
-    Icons.local_gas_station,
-    Icons.directions_bus,
-    Icons.train,
-    Icons.flight,
-    Icons.directions_bike,
-    Icons.motorcycle,
-    Icons.local_taxi,
-    Icons.subway,
-    Icons.electric_car,
+    'car': Icons.directions_car,
+    'gas station': Icons.local_gas_station,
+    'bus': Icons.directions_bus,
+    'train': Icons.train,
+    'flight': Icons.flight,
+    'bike': Icons.directions_bike,
+    'motorcycle': Icons.motorcycle,
+    'taxi': Icons.local_taxi,
+    'subway': Icons.subway,
+    'electric car': Icons.electric_car,
 
     // Home & Utilities
-    Icons.home,
-    Icons.electrical_services,
-    Icons.plumbing,
-    Icons.thermostat,
-    Icons.water_drop,
-    Icons.wifi,
-    Icons.phone,
-    Icons.tv,
-    Icons.cleaning_services,
-    Icons.home_repair_service,
+    'home': Icons.home,
+    'electrical': Icons.electrical_services,
+    'plumbing': Icons.plumbing,
+    'thermostat': Icons.thermostat,
+    'water': Icons.water_drop,
+    'wifi': Icons.wifi,
+    'phone': Icons.phone,
+    'tv': Icons.tv,
+    'cleaning': Icons.cleaning_services,
+    'repair': Icons.home_repair_service,
 
     // Health & Medical
-    Icons.medical_services,
-    Icons.local_hospital,
-    Icons.local_pharmacy,
-    Icons.medication,
-    Icons.psychology,
-    Icons.spa,
-    Icons.self_improvement,
-    Icons.medical_information,
+    'medical': Icons.medical_services,
+    'hospital': Icons.local_hospital,
+    'pharmacy': Icons.local_pharmacy,
+    'medication': Icons.medication,
+    'psychology': Icons.psychology,
+    'spa': Icons.spa,
+    'improvement': Icons.self_improvement,
+    'medical info': Icons.medical_information,
 
     // Entertainment
-    Icons.movie,
-    Icons.theater_comedy,
-    Icons.music_note,
-    Icons.sports_esports,
-    Icons.sports_soccer,
-    Icons.sports_basketball,
-    Icons.park,
-    Icons.camera_alt,
-    Icons.library_books,
-    Icons.celebration,
+    'movie': Icons.movie,
+    'theater': Icons.theater_comedy,
+    'music': Icons.music_note,
+    'gaming': Icons.sports_esports,
+    'soccer': Icons.sports_soccer,
+    'basketball': Icons.sports_basketball,
+    'park': Icons.park,
+    'camera': Icons.camera_alt,
+    'books': Icons.library_books,
+    'celebration': Icons.celebration,
 
     // Education & Work
-    Icons.school,
-    Icons.work,
-    Icons.business,
-    Icons.computer,
-    Icons.book,
-    Icons.menu_book,
-    Icons.class_,
-    Icons.workspace_premium,
+    'school': Icons.school,
+    'work': Icons.work,
+    'business': Icons.business,
+    'computer': Icons.computer,
+    'book': Icons.book,
+    'menu book': Icons.menu_book,
+    'class': Icons.class_,
+    'workspace': Icons.workspace_premium,
 
     // Fitness & Sports
-    Icons.fitness_center,
-    Icons.sports_gymnastics,
-    Icons.pool,
-    Icons.hiking,
-    Icons.sports_tennis,
-    Icons.golf_course,
-    Icons.snowboarding,
-    Icons.kayaking,
+    'fitness': Icons.fitness_center,
+    'gymnastics': Icons.sports_gymnastics,
+    'pool': Icons.pool,
+    'hiking': Icons.hiking,
+    'tennis': Icons.sports_tennis,
+    'golf': Icons.golf_course,
+    'snowboarding': Icons.snowboarding,
+    'kayaking': Icons.kayaking,
 
     // Finance & Business
-    Icons.account_balance,
-    Icons.credit_card,
-    Icons.savings,
-    Icons.paid,
-    Icons.attach_money,
-    Icons.currency_exchange,
-    Icons.trending_up,
-    Icons.account_balance_wallet,
-    Icons.receipt_long,
-    Icons.calculate,
+    'bank': Icons.account_balance,
+    'credit card': Icons.credit_card,
+    'savings': Icons.savings,
+    'paid': Icons.paid,
+    'money': Icons.attach_money,
+    'currency': Icons.currency_exchange,
+    'trending': Icons.trending_up,
+    'wallet': Icons.account_balance_wallet,
+    'receipt': Icons.receipt_long,
+    'calculate': Icons.calculate,
 
     // Personal Care
-    Icons.content_cut,
-    Icons.face,
-    Icons.checkroom,
-    Icons.local_laundry_service,
-    Icons.dry_cleaning,
+    'haircut': Icons.content_cut,
+    'face': Icons.face,
+    'clothing': Icons.checkroom,
+    'laundry': Icons.local_laundry_service,
+    'dry cleaning': Icons.dry_cleaning,
 
     // Pets & Animals
-    Icons.pets,
+    'pets': Icons.pets,
 
     // Travel & Vacation
-    Icons.flight_takeoff,
-    Icons.hotel,
-    Icons.luggage,
-    Icons.map,
-    Icons.beach_access,
-    Icons.tour,
+    'takeoff': Icons.flight_takeoff,
+    'hotel': Icons.hotel,
+    'luggage': Icons.luggage,
+    'map': Icons.map,
+    'beach': Icons.beach_access,
+    'tour': Icons.tour,
 
     // Technology
-    Icons.smartphone,
-    Icons.laptop,
-    Icons.tablet,
-    Icons.headphones,
-    Icons.cable,
-    Icons.router,
+    'smartphone': Icons.smartphone,
+    'laptop': Icons.laptop,
+    'tablet': Icons.tablet,
+    'headphones': Icons.headphones,
+    'cable': Icons.cable,
+    'router': Icons.router,
 
     // Miscellaneous
-    Icons.category,
-    Icons.star,
-    Icons.favorite,
-    Icons.card_giftcard,
-    Icons.volunteer_activism,
-    Icons.eco,
-    Icons.local_florist,
-    Icons.child_care,
-    Icons.elderly,
-  ];
+    'category': Icons.category,
+    'star': Icons.star,
+    'favorite': Icons.favorite,
+    'gift': Icons.card_giftcard,
+    'volunteer': Icons.volunteer_activism,
+    'eco': Icons.eco,
+    'florist': Icons.local_florist,
+    'child care': Icons.child_care,
+    'elderly': Icons.elderly,
+  };
+
+  static List<IconData> get availableIcons => availableIconsMap.values.toList();
+
+  // Get dialog width based on screen size breakpoints
+  double _getDialogWidth(double screenWidth) {
+    if (screenWidth < 600) {
+      // xs - Small screens (phones)
+      return screenWidth * 0.9;
+    } else if (screenWidth < 900) {
+      // sm/md - Medium screens (tablets)
+      return 500;
+    } else if (screenWidth < 1200) {
+      // lg - Large screens (small laptops)
+      return 600;
+    } else {
+      // xl - Extra large screens (desktops)
+      return 700;
+    }
+  }
 
   Widget _buildIconPicker(Color selectedColor, IconData selectedIcon, Function(IconData) onIconSelected) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Select Icon'),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 200,
-          child: SingleChildScrollView(
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: availableIcons.map((icon) {
-                return GestureDetector(
-                  onTap: () => onIconSelected(icon),
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: selectedIcon == icon
-                          ? selectedColor.withOpacity(0.2)
-                          : Colors.transparent,
-                      shape: BoxShape.circle,
-                      border: selectedIcon == icon
-                          ? Border.all(color: selectedColor)
-                          : null,
-                    ),
-                    child: Icon(icon, color: selectedColor, size: 20),
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-        ),
-      ],
+    return SizedBox(
+      height: 240,
+      child: _IconPickerWidget(
+        selectedColor: selectedColor,
+        selectedIcon: selectedIcon,
+        onIconSelected: onIconSelected,
+      ),
     );
   }
 
@@ -254,241 +246,102 @@ class CategoriesPage extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('Add Category'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Category Name',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 16),
+        builder: (context, setState) {
+          final screenWidth = MediaQuery.of(context).size.width;
+          final dialogWidth = _getDialogWidth(screenWidth);
 
-                TextField(
-                  controller: keywordsController,
-                  decoration: const InputDecoration(
-                    labelText: 'Keywords (comma separated)',
-                    hintText: 'e.g., grocery, food, market',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Color picker
-                const Text('Select Color'),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
+          return AlertDialog(
+            title: const Text('Add Category'),
+            content: SizedBox(
+              width: dialogWidth,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Colors.red,
-                    Colors.orange,
-                    Colors.green,
-                    Colors.blue,
-                    Colors.purple,
-                    Colors.teal,
-                    Colors.pink,
-                    Colors.brown,
-                  ].map((color) {
-                    return GestureDetector(
-                      onTap: () => setState(() => selectedColor = color),
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: color,
-                          shape: BoxShape.circle,
-                          border: selectedColor == color
-                              ? Border.all(color: Colors.black, width: 2)
-                              : null,
-                        ),
+                    TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Category Name',
+                        border: OutlineInputBorder(),
                       ),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 16),
-
-                // Icon picker
-                _buildIconPicker(selectedColor, selectedIcon, (icon) {
-                  setState(() => selectedIcon = icon);
-                }),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (nameController.text.isNotEmpty) {
-                  final provider = Provider.of<TransactionProvider>(context, listen: false);
-                  final keywords = keywordsController.text
-                      .split(',')
-                      .map((k) => k.trim())
-                      .where((k) => k.isNotEmpty)
-                      .toList();
-
-                  final matchingCount = provider.countTransactionsByKeywords(keywords);
-
-                  final confirmed = await showDialog<bool>(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Confirm Category'),
-                      content: Text(
-                        'This category will match $matchingCount existing uncategorized transactions. Do you want to proceed?'
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(false),
-                          child: const Text('Cancel'),
-                        ),
-                        ElevatedButton(
-                          onPressed: () => Navigator.of(context).pop(true),
-                          child: const Text('Confirm'),
-                        ),
-                      ],
                     ),
-                  );
+                    const SizedBox(height: 16),
 
-                  if (confirmed == true) {
-                    final category = Category(
-                      id: 'cat_${DateTime.now().millisecondsSinceEpoch}',
-                      name: nameController.text,
-                      color: selectedColor,
-                      icon: selectedIcon,
-                      keywords: keywords,
-                    );
-
-                    await provider.addCategory(category);
-                    final recategorizedCount = await provider.recategorizeTransactionsByKeywords(category.id, keywords);
-                    if (context.mounted) {
-                      Navigator.pop(context);
-
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Category "${category.name}" added and $recategorizedCount transactions categorized')),
-                      );
-                    }
-                  }
-                }
-              },
-              child: const Text('Add'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showEditCategoryDialog(BuildContext context, Category category) {
-    final nameController = TextEditingController(text: category.name);
-    final keywordsController = TextEditingController(text: category.keywords.join(', '));
-    Color selectedColor = category.color;
-    IconData selectedIcon = category.icon;
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('Edit Category'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Category Name',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                TextField(
-                  controller: keywordsController,
-                  decoration: const InputDecoration(
-                    labelText: 'Keywords (comma separated)',
-                    hintText: 'e.g., grocery, food, market',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Color picker
-                const Text('Select Color'),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  children: [
-                    Colors.red,
-                    Colors.orange,
-                    Colors.green,
-                    Colors.blue,
-                    Colors.purple,
-                    Colors.teal,
-                    Colors.pink,
-                    Colors.brown,
-                  ].map((color) {
-                    return GestureDetector(
-                      onTap: () => setState(() => selectedColor = color),
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: color,
-                          shape: BoxShape.circle,
-                          border: selectedColor.value == color.value
-                              ? Border.all(color: Colors.black, width: 2)
-                              : null,
-                        ),
+                    TextField(
+                      controller: keywordsController,
+                      decoration: const InputDecoration(
+                        labelText: 'Keywords (comma separated)',
+                        hintText: 'e.g., grocery, food, market',
+                        border: OutlineInputBorder(),
                       ),
-                    );
-                  }).toList(),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Color picker
+                    const Text('Select Color'),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      children: [
+                        Colors.red,
+                        Colors.orange,
+                        Colors.green,
+                        Colors.blue,
+                        Colors.purple,
+                        Colors.teal,
+                        Colors.pink,
+                        Colors.brown,
+                      ].map((color) {
+                        return GestureDetector(
+                          onTap: () => setState(() => selectedColor = color),
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: color,
+                              shape: BoxShape.circle,
+                              border: selectedColor == color
+                                  ? Border.all(color: Colors.black, width: 2)
+                                  : null,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Icon picker
+                    _buildIconPicker(selectedColor, selectedIcon, (icon) {
+                      setState(() => selectedIcon = icon);
+                    }),
+                    const SizedBox(height: 8),
+                  ],
                 ),
-                const SizedBox(height: 16),
-
-                // Icon picker
-                _buildIconPicker(selectedColor, selectedIcon, (icon) {
-                  setState(() => selectedIcon = icon);
-                }),
-              ],
+              ),
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (nameController.text.isNotEmpty) {
-                  final provider = Provider.of<TransactionProvider>(context, listen: false);
-                  final keywords = keywordsController.text
-                      .split(',')
-                      .map((k) => k.trim())
-                      .where((k) => k.isNotEmpty)
-                      .toList();
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  if (nameController.text.isNotEmpty) {
+                    final provider = Provider.of<TransactionProvider>(context, listen: false);
+                    final keywords = keywordsController.text
+                        .split(',')
+                        .map((k) => k.trim())
+                        .where((k) => k.isNotEmpty)
+                        .toList();
 
-                  // Calculate the impact of changes
-                  final changes = provider.calculateCategoryChanges(category, keywords);
-                  final totalChanges = changes['added']! + changes['removed']!;
+                    final matchingCount = provider.countTransactionsByKeywords(keywords);
 
-                  bool proceed = true;
-                  if (totalChanges > 0) {
-                    proceed = await showDialog<bool>(
+                    final confirmed = await showDialog<bool>(
                       context: context,
                       builder: (context) => AlertDialog(
-                        title: const Text('Confirm Changes'),
+                        title: const Text('Confirm Category'),
                         content: Text(
-                          'This update will:\n'
-                          '• Add ${changes['added']} transactions to this category\n'
-                          '• Remove ${changes['removed']} transactions from this category\n\n'
-                          'Do you want to proceed?'
+                          'This category will match $matchingCount existing uncategorized transactions. Do you want to proceed?'
                         ),
                         actions: [
                           TextButton(
@@ -501,36 +354,191 @@ class CategoriesPage extends StatelessWidget {
                           ),
                         ],
                       ),
-                    ) ?? false;
-                  }
-
-                  if (proceed) {
-                    final updatedCategory = Category(
-                      id: category.id,
-                      name: nameController.text,
-                      color: selectedColor,
-                      icon: selectedIcon,
-                      keywords: keywords,
                     );
 
-                    await provider.updateCategory(updatedCategory);
-                    final actualChanges = await provider.updateCategoryAndRecategorize(updatedCategory, keywords);
-                    if (context.mounted) {
-                      Navigator.pop(context);
-
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Category "${updatedCategory.name}" updated: ${actualChanges['added']} added, ${actualChanges['removed']} removed')),
+                    if (confirmed == true) {
+                      final category = Category(
+                        id: 'cat_${DateTime.now().millisecondsSinceEpoch}',
+                        name: nameController.text,
+                        color: selectedColor,
+                        icon: selectedIcon,
+                        keywords: keywords,
                       );
+
+                      await provider.addCategory(category);
+                      final recategorizedCount = await provider.recategorizeTransactionsByKeywords(category.id, keywords);
+                      if (context.mounted) {
+                        Navigator.pop(context);
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Category "${category.name}" added and $recategorizedCount transactions categorized')),
+                        );
+                      }
                     }
                   }
-                }
-              },
-              child: const Text('Update'),
+                },
+                child: const Text('Add'),
+              ),
+            ],
+          );
+      },
+    ));
+  }
+
+  void _showEditCategoryDialog(BuildContext context, Category category) {
+    final nameController = TextEditingController(text: category.name);
+    final keywordsController = TextEditingController(text: category.keywords.join(', '));
+    Color selectedColor = category.color;
+    IconData selectedIcon = category.icon;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          final screenWidth = MediaQuery.of(context).size.width;
+          final dialogWidth = _getDialogWidth(screenWidth);
+
+          return AlertDialog(
+            title: const Text('Edit Category'),
+            content: SizedBox(
+              width: dialogWidth,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Category Name',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    TextField(
+                      controller: keywordsController,
+                      decoration: const InputDecoration(
+                        labelText: 'Keywords (comma separated)',
+                        hintText: 'e.g., grocery, food, market',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Color picker
+                    const Text('Select Color'),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      children: [
+                        Colors.red,
+                        Colors.orange,
+                        Colors.green,
+                        Colors.blue,
+                        Colors.purple,
+                        Colors.teal,
+                        Colors.pink,
+                        Colors.brown,
+                      ].map((color) {
+                        return GestureDetector(
+                          onTap: () => setState(() => selectedColor = color),
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: color,
+                              shape: BoxShape.circle,
+                              border: selectedColor == color
+                                  ? Border.all(color: Colors.black, width: 2)
+                                  : null,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Icon picker
+                    _buildIconPicker(selectedColor, selectedIcon, (icon) {
+                      setState(() => selectedIcon = icon);
+                    }),
+                    const SizedBox(height: 8),
+                  ],
+                ),
+              ),
             ),
-          ],
-        ),
-      ),
-    );
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  if (nameController.text.isNotEmpty) {
+                    final provider = Provider.of<TransactionProvider>(context, listen: false);
+                    final keywords = keywordsController.text
+                        .split(',')
+                        .map((k) => k.trim())
+                        .where((k) => k.isNotEmpty)
+                        .toList();
+
+                    // Calculate the impact of changes
+                    final changes = provider.calculateCategoryChanges(category, keywords);
+                    final totalChanges = changes['added']! + changes['removed']!;
+
+                    bool proceed = true;
+                    if (totalChanges > 0) {
+                      proceed = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Confirm Changes'),
+                          content: Text(
+                            'This update will:\n'
+                            '• Add ${changes['added']} transactions to this category\n'
+                            '• Remove ${changes['removed']} transactions from this category\n\n'
+                            'Do you want to proceed?'
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: const Text('Cancel'),
+                            ),
+                            ElevatedButton(
+                              onPressed: () => Navigator.of(context).pop(true),
+                              child: const Text('Confirm'),
+                            ),
+                          ],
+                        ),
+                      ) ?? false;
+                    }
+
+                    if (proceed) {
+                      final updatedCategory = Category(
+                        id: category.id,
+                        name: nameController.text,
+                        color: selectedColor,
+                        icon: selectedIcon,
+                        keywords: keywords,
+                      );
+
+                      await provider.updateCategory(updatedCategory);
+                      final actualChanges = await provider.updateCategoryAndRecategorize(updatedCategory, keywords);
+                      if (context.mounted) {
+                        Navigator.pop(context);
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Category "${updatedCategory.name}" updated: ${actualChanges['added']} added, ${actualChanges['removed']} removed')),
+                        );
+                      }
+                    }
+                  }
+                },
+                child: const Text('Update'),
+              ),
+            ],
+          );
+      },
+    ));
   }
 
   void _confirmDelete(BuildContext context, TransactionProvider provider, Category category) {
@@ -560,6 +568,135 @@ class CategoriesPage extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _IconPickerWidget extends StatefulWidget {
+  final Color selectedColor;
+  final IconData selectedIcon;
+  final Function(IconData) onIconSelected;
+
+  const _IconPickerWidget({
+    required this.selectedColor,
+    required this.selectedIcon,
+    required this.onIconSelected,
+  });
+
+  @override
+  State<_IconPickerWidget> createState() => _IconPickerWidgetState();
+}
+
+class _IconPickerWidgetState extends State<_IconPickerWidget> {
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<MapEntry<String, IconData>> get _filteredIcons {
+    if (_searchQuery.isEmpty) {
+      return CategoriesPage.availableIconsMap.entries.toList();
+    }
+
+    return CategoriesPage.availableIconsMap.entries
+        .where((entry) => entry.key.toLowerCase().contains(_searchQuery.toLowerCase()))
+        .toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text('Select Icon'),
+            const SizedBox(width: 16),
+            SizedBox(
+              width: 200,
+              height: 40,
+              child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Search icons...',
+                    prefixIcon: const Icon(Icons.search, size: 20),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 20),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() => _searchQuery = '');
+                            },
+                          )
+                        : null,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                  style: const TextStyle(fontSize: 14),
+                  onChanged: (value) => setState(() => _searchQuery = value),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 160,
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: _filteredIcons.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.search_off, size: 48, color: Colors.grey.shade400),
+                      const SizedBox(height: 8),
+                      Text(
+                        'No icons found for "$_searchQuery"',
+                        style: TextStyle(color: Colors.grey.shade600),
+                      ),
+                    ],
+                  ),
+                )
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.all(8),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _filteredIcons.map((entry) {
+                      final icon = entry.value;
+                      return Tooltip(
+                        message: entry.key,
+                        child: GestureDetector(
+                          onTap: () => widget.onIconSelected(icon),
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: widget.selectedIcon == icon
+                                  ? widget.selectedColor.withOpacity(0.2)
+                                  : Colors.transparent,
+                              shape: BoxShape.circle,
+                              border: widget.selectedIcon == icon
+                                  ? Border.all(color: widget.selectedColor)
+                                  : null,
+                            ),
+                            child: Icon(icon, color: widget.selectedColor, size: 20),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+        ),
+      ],
     );
   }
 }
