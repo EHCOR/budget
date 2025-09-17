@@ -288,9 +288,9 @@ class TransactionProvider extends ChangeNotifier {
       }
     }
 
-    // Find transactions that will be added to this category from uncategorized
-    final uncategorized = _transactions.where((t) => t.categoryId == 'uncategorized');
-    for (var transaction in uncategorized) {
+    // Find transactions that will be added to this category from any other category
+    final otherTransactions = _transactions.where((t) => t.categoryId != category.id);
+    for (var transaction in otherTransactions) {
       final lowerDesc = transaction.description.toLowerCase();
       if (_matchesKeywords(lowerDesc, newKeywords)) {
         added++;
@@ -315,9 +315,9 @@ class TransactionProvider extends ChangeNotifier {
       }
     }
 
-    // Add transactions from uncategorized that now match the new keywords
-    final uncategorized = _transactions.where((t) => t.categoryId == 'uncategorized').toList();
-    for (var transaction in uncategorized) {
+    // Add transactions that now match the new keywords (from any other category including uncategorized)
+    final otherTransactions = _transactions.where((t) => t.categoryId != category.id).toList();
+    for (var transaction in otherTransactions) {
       final lowerDesc = transaction.description.toLowerCase();
       if (_matchesKeywords(lowerDesc, newKeywords)) {
         transaction.categoryId = category.id;
