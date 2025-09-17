@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/transaction_provider.dart';
 import '../widgets/trends/monthly_category_chart.dart';
+import '../widgets/trends/income_expense_chart.dart';
+import '../widgets/trends/category_growth_chart.dart';
+import '../widgets/trends/budget_analysis_chart.dart';
 import '../widgets/date_range_selector.dart';
 import 'settings_page.dart';
 
@@ -61,8 +64,16 @@ class _TrendsPageState extends State<TrendsPage> {
                   const MonthlyCategoryChart(),
                   const SizedBox(height: 24),
 
-                  // Placeholder for future charts
-                  _buildFutureChartsPlaceholder(),
+                  // Spending vs Income Over Time
+                  const IncomeExpenseChart(),
+                  const SizedBox(height: 24),
+
+                  // Category Growth Trends
+                  const CategoryGrowthChart(),
+                  const SizedBox(height: 24),
+
+                  // Budget vs Actual Analysis
+                  const BudgetAnalysisChart(),
                 ],
               ),
             ),
@@ -97,50 +108,4 @@ class _TrendsPageState extends State<TrendsPage> {
     );
   }
 
-  Widget _buildFutureChartsPlaceholder() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.construction,
-                  color: Colors.grey.shade600,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'More Charts Coming Soon',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Additional trend analysis charts will be added here:',
-              style: TextStyle(color: Colors.grey.shade600),
-            ),
-            const SizedBox(height: 8),
-            ...['Spending vs Income Over Time', 'Category Growth Trends', 'Budget vs Actual Analysis']
-                .map((item) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 2),
-                      child: Row(
-                        children: [
-                          Icon(Icons.circle, size: 8, color: Colors.grey.shade400),
-                          const SizedBox(width: 8),
-                          Text(item, style: TextStyle(color: Colors.grey.shade600)),
-                        ],
-                      ),
-                    )),
-          ],
-        ),
-      ),
-    );
-  }
 }
