@@ -1,5 +1,6 @@
 // utils/statistics_service.dart
 import 'dart:math';
+import 'dart:math' as math;
 
 class StatisticsService {
   // Calculate average of a list of values
@@ -14,25 +15,146 @@ class StatisticsService {
     return ((newValue - oldValue) / oldValue) * 100;
   }
 
-  // Project next value using linear regression
+  // Project next value using improved regression with outlier detection and dampening
   static double projectNextValue(List<double> values) {
     if (values.length < 2) return values.isNotEmpty ? values.first : 0.0;
 
-    // Simple linear regression
-    final n = values.length;
+    // Step 1: Outlier detection and filtering
+    final cleanedValues = _removeOutliers(values);
+
+    // If we removed too many values, fall back to recent average
+    if (cleanedValues.length < 2) {
+      return _getRecentAverage(values, 2);
+    }
+
+    // Step 2: Calculate linear regression on cleaned data
+    final n = cleanedValues.length;
     final x = List.generate(n, (index) => index.toDouble());
-    final y = values;
+    final y = cleanedValues;
 
     final sumX = x.reduce((a, b) => a + b);
     final sumY = y.reduce((a, b) => a + b);
     final sumXY = List.generate(n, (i) => x[i] * y[i]).reduce((a, b) => a + b);
     final sumXX = x.map((xi) => xi * xi).reduce((a, b) => a + b);
 
-    final slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+    final denominator = n * sumXX - sumX * sumX;
+    if (denominator.abs() < 1e-10) {
+      // Avoid division by zero - data is too linear
+      return _getRecentAverage(values, 3);
+    }
+
+    final slope = (n * sumXY - sumX * sumY) / denominator;
     final intercept = (sumY - slope * sumX) / n;
 
-    // Project next value (x = n)
-    return slope * n + intercept;
+    // Step 3: Raw projection
+    final rawProjection = slope * n + intercept;
+
+    // Step 4: Apply dampening and bounds
+    return _applyProjectionDampening(rawProjection, values, slope);
+  }
+
+  // Remove statistical outliers using Interquartile Range (IQR) method
+  static List<double> _removeOutliers(List<double> values) {
+    if (values.length < 4) return List.from(values); // Too few points for outlier detection
+
+    final sortedValues = List.from(values)..sort();
+    final q1Index = (sortedValues.length * 0.25).floor();
+    final q3Index = (sortedValues.length * 0.75).floor();
+
+    final q1 = sortedValues[q1Index];
+    final q3 = sortedValues[q3Index];
+    final iqr = q3 - q1;
+
+    final lowerBound = q1 - 1.5 * iqr;
+    final upperBound = q3 + 1.5 * iqr;
+
+    // Keep values within bounds, but preserve at least 60% of original data
+    final filtered = values.where((v) => v >= lowerBound && v <= upperBound).toList();
+
+    // If we filtered out too much, be less aggressive
+    if (filtered.length < (values.length * 0.6).ceil()) {
+      final relaxedLowerBound = q1 - 2.5 * iqr;
+      final relaxedUpperBound = q3 + 2.5 * iqr;
+      return values.where((v) => v >= relaxedLowerBound && v <= relaxedUpperBound).toList();
+    }
+
+    return filtered;
+  }
+
+  // Get average of most recent N values
+  static double _getRecentAverage(List<double> values, int count) {
+    if (values.isEmpty) return 0.0;
+    final recentCount = math.min(count, values.length);
+    final recentValues = values.sublist(values.length - recentCount);
+    return calculateAverage(recentValues);
+  }
+
+  // Apply dampening based on volatility and trend characteristics
+  static double _applyProjectionDampening(double rawProjection, List<double> values, double slope) {
+    final currentValue = values.last;
+    final average = calculateAverage(values);
+    final volatility = calculateVolatility(values);
+
+    // Step 1: Regression to mean - dampen extreme projections
+    final meanRegressionFactor = _calculateMeanRegressionFactor(volatility, values.length);
+    final meanAdjustedProjection = rawProjection + (average - rawProjection) * meanRegressionFactor;
+
+    // Step 2: Apply bounds based on historical data
+    final projectionBounds = _calculateProjectionBounds(values);
+    final boundedProjection = meanAdjustedProjection.clamp(projectionBounds['min']!, projectionBounds['max']!);
+
+    // Step 3: Special handling for declining trends
+    if (slope < 0) {
+      return _handleDecliningTrend(boundedProjection, currentValue, average, slope);
+    }
+
+    // Step 4: Limit extreme growth
+    final maxGrowthRate = 0.5; // 50% max increase from current value
+    final maxIncrease = currentValue * maxGrowthRate;
+
+    return math.min(boundedProjection, currentValue + maxIncrease);
+  }
+
+  // Calculate how much to regress toward the mean based on data volatility
+  static double _calculateMeanRegressionFactor(double volatility, int dataPoints) {
+    // More volatile data gets more regression to mean
+    // More data points get less regression to mean (more confidence in trend)
+    final volatilityFactor = math.min(volatility / 100.0, 0.5); // Cap at 50%
+    final confidenceFactor = math.max(0.1, 1.0 - (dataPoints / 20.0)); // More data = more confidence
+
+    return volatilityFactor * confidenceFactor;
+  }
+
+  // Calculate reasonable bounds for projections based on historical data
+  static Map<String, double> _calculateProjectionBounds(List<double> values) {
+    final average = calculateAverage(values);
+    final volatility = calculateVolatility(values);
+    final maxValue = values.reduce(math.max);
+    final minValue = values.reduce(math.min);
+
+    // Bounds based on historical range plus some volatility buffer
+    final bufferFactor = 1.0 + (volatility / average).clamp(0.2, 1.0);
+
+    return {
+      'min': math.max(0.0, minValue * 0.3), // Don't project below 30% of historical minimum
+      'max': maxValue * bufferFactor, // Don't exceed max by more than buffer
+    };
+  }
+
+  // Special handling for declining trends to prevent unrealistic projections
+  static double _handleDecliningTrend(double projection, double currentValue, double average, double slope) {
+    // For declining trends, we assume they will level off rather than continue indefinitely
+    final projectedDrop = currentValue - projection;
+
+    // If projection shows a huge drop, dampen it significantly
+    if (projectedDrop > currentValue * 0.3) { // More than 30% drop
+      // Project a more moderate decline that levels off toward a reasonable floor
+      final reasonableFloor = math.max(average * 0.2, currentValue * 0.4);
+      final dampenedDrop = currentValue * 0.2; // Max 20% drop per projection
+      return math.max(reasonableFloor, currentValue - dampenedDrop);
+    }
+
+    return projection;
   }
 
   // Calculate trend direction
