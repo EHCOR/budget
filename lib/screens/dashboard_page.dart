@@ -16,6 +16,15 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   bool _showIncome = false;
+  String? _selectedCategoryId;
+  int? _touchedSectionIndex;
+
+  void _clearSelection() {
+    setState(() {
+      _selectedCategoryId = null;
+      _touchedSectionIndex = -1;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +66,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   const SizedBox(height: 24),
 
                   // Recent Transactions
-                  _buildRecentTransactions(provider),
+                  _buildTransactionsList(provider),
                 ],
               ),
             ),
@@ -227,27 +236,104 @@ class _DashboardPageState extends State<DashboardPage> {
                 height: 200,
                 child: PieChart(
                   PieChartData(
-                    sections: summaries.map((summary) {
-                      final total = summaries.fold(0.0, (sum, s) => sum + s.amount);
-                      final percentage = (summary.amount / total * 100);
+                    pieTouchData: PieTouchData(
+                      touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                        // Only handle tap events, not hover/move events
+                        if (event is! FlTapUpEvent) return;
 
-                      return PieChartSectionData(
-                        value: summary.amount,
-                        title: percentage > 5 ? '${percentage.toStringAsFixed(0)}%' : '',
-                        color: summary.color,
-                        radius: 80,
-                        titleStyle: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      );
-                    }).toList(),
+                        if (!event.isInterestedForInteractions ||
+                            pieTouchResponse == null ||
+                            pieTouchResponse.touchedSection == null) {
+                          return;
+                        }
+
+                        final touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
+
+                        // Only update state if something actually changed
+                        if (_touchedSectionIndex == touchedIndex) {
+                          if (_selectedCategoryId != null) {
+                            setState(() {
+                              _selectedCategoryId = null;
+                              _touchedSectionIndex = -1;
+                            });
+                          }
+                        } else {
+                          final newCategoryId = summaries[touchedIndex].categoryId;
+                          if (_selectedCategoryId != newCategoryId) {
+                            setState(() {
+                              _touchedSectionIndex = touchedIndex;
+                              _selectedCategoryId = newCategoryId;
+                            });
+                          }
+                        }
+                      },
+                    ),
+                    sections: () {
+                      final total = summaries.fold(0.0, (sum, s) => sum + s.amount);
+                      return summaries.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final summary = entry.value;
+                        final percentage = (summary.amount / total * 100);
+                        final isSelected = index == _touchedSectionIndex;
+
+                        return PieChartSectionData(
+                          value: summary.amount,
+                          title: percentage > 5 ? '${percentage.toStringAsFixed(0)}%' : '',
+                          color: summary.color,
+                          radius: isSelected ? 90 : 80,
+                          titleStyle: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        );
+                      }).toList();
+                    }(),
                     centerSpaceRadius: 0,
                     sectionsSpace: 2,
                   ),
                 ),
               ),
+            if (summaries.isNotEmpty && _selectedCategoryId != null) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: Theme.of(context).colorScheme.primary,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Showing transactions for ${summaries.firstWhere((s) => s.categoryId == _selectedCategoryId).categoryName}',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: _clearSelection,
+                      child: Icon(
+                        Icons.close,
+                        color: Theme.of(context).colorScheme.primary,
+                        size: 18,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             if (summaries.isNotEmpty) ...[
               const SizedBox(height: 16),
               ...summaries.take(5).map((summary) => Padding(
@@ -281,8 +367,19 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildRecentTransactions(TransactionProvider provider) {
-    final recentTransactions = provider.filteredTransactions.take(5).toList();
+  Widget _buildTransactionsList(TransactionProvider provider) {
+    // Cache transactions to avoid repeated filtering
+    final transactions = _selectedCategoryId != null
+        ? provider.getTransactionsByCategory(_selectedCategoryId!)
+        : provider.filteredTransactions.take(5).toList();
+
+    final selectedCategory = _selectedCategoryId != null
+        ? provider.getCategoryById(_selectedCategoryId!)
+        : null;
+
+    final title = _selectedCategoryId != null
+        ? '${selectedCategory?.name ?? 'Unknown'} Transactions'
+        : 'Recent Transactions';
 
     return Card(
       child: Padding(
@@ -290,15 +387,38 @@ class _DashboardPageState extends State<DashboardPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Recent Transactions',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                if (_selectedCategoryId != null)
+                  GestureDetector(
+                    onTap: _clearSelection,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.close,
+                        size: 16,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(height: 16),
-            if (recentTransactions.isEmpty)
+            if (transactions.isEmpty)
               const Center(
                 child: Padding(
                   padding: EdgeInsets.all(32),
@@ -306,7 +426,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               )
             else
-              ...recentTransactions.map((transaction) {
+              ...transactions.map((transaction) {
                 final category = provider.getCategoryById(transaction.categoryId);
                 return ListTile(
                   leading: CircleAvatar(
