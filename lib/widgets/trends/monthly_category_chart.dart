@@ -16,7 +16,6 @@ class MonthlyCategoryChart extends StatefulWidget {
 }
 
 class _MonthlyCategoryChartState extends State<MonthlyCategoryChart> {
-  int _selectedMonths = 6;
   int? _touchedGroupIndex;
   int? _touchedRodIndex;
   String? _hoveredCategory;
@@ -33,7 +32,7 @@ class _MonthlyCategoryChartState extends State<MonthlyCategoryChart> {
   Widget build(BuildContext context) {
     return Consumer<TransactionProvider>(
       builder: (context, provider, child) {
-        final data = provider.getMonthlyCategoryData(_selectedMonths);
+        final data = provider.getMonthlyCategoryData();
         final categoryColors = provider.getCategoryColorsMap();
 
         if (data.isEmpty || data.values.every((month) =>
@@ -68,33 +67,12 @@ class _MonthlyCategoryChartState extends State<MonthlyCategoryChart> {
   }
 
   Widget _buildHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        const Text(
-          'Monthly Spending by Category',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        DropdownButton<int>(
-          value: _selectedMonths,
-          items: [3, 6, 12].map((months) {
-            return DropdownMenuItem(
-              value: months,
-              child: Text('$months months'),
-            );
-          }).toList(),
-          onChanged: (value) {
-            if (value != null) {
-              setState(() {
-                _selectedMonths = value;
-              });
-            }
-          },
-        ),
-      ],
+    return const Text(
+      'Monthly Spending by Category',
+      style: TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+      ),
     );
   }
 
@@ -111,18 +89,12 @@ class _MonthlyCategoryChartState extends State<MonthlyCategoryChart> {
             ),
             const SizedBox(height: 16),
             Text(
-              'No spending data available',
+              'No spending data available for the selected range',
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.grey.shade600,
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Add some transactions to see monthly trends',
-              style: TextStyle(
-                color: Colors.grey.shade500,
-              ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -485,7 +457,7 @@ class _MonthlyCategoryChartState extends State<MonthlyCategoryChart> {
     Map<String, double> monthData,
     Map<String, Map<String, Map<String, double>>> data,
   ) {
-    final spot = response.spot;
+    final spot = response.spot!;
     if (spot == null) return null;
 
     final stackItemIndex = spot.touchedStackItemIndex;
@@ -522,7 +494,7 @@ class _MonthlyCategoryChartState extends State<MonthlyCategoryChart> {
     BarTouchResponse response,
     Map<String, Map<String, Map<String, double>>> data,
   ) {
-    final spot = response.spot;
+    final spot = response.spot!;
     if (spot == null) {
       _clearHoverWithDebounce();
       return;

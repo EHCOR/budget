@@ -5,7 +5,12 @@ import 'package:intl/intl.dart';
 import '../providers/transaction_provider.dart';
 
 class DateRangeSelector extends StatelessWidget {
-  const DateRangeSelector({super.key});
+  final bool showTrendsOptions;
+
+  const DateRangeSelector({
+    super.key,
+    this.showTrendsOptions = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -27,10 +32,6 @@ class DateRangeSelector extends StatelessWidget {
                         fontSize: 16,
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.calendar_month),
-                      onPressed: () => _selectCustomRange(context, provider),
-                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -41,37 +42,57 @@ class DateRangeSelector extends StatelessWidget {
                       _buildQuickOption(
                         context,
                         'Last 7 Days',
-                            () => _setLastDays(provider, 7),
+                        () => _setLastDays(provider, 7),
                       ),
                       const SizedBox(width: 8),
                       _buildQuickOption(
                         context,
                         'Last 30 Days',
-                            () => _setLastDays(provider, 30),
+                        () => _setLastDays(provider, 30),
                       ),
                       const SizedBox(width: 8),
                       _buildQuickOption(
                         context,
                         'This Month',
-                            () => _setThisMonth(provider),
+                        () => _setThisMonth(provider),
                       ),
                       const SizedBox(width: 8),
                       _buildQuickOption(
                         context,
                         'Last Month',
-                            () => _setLastMonth(provider),
+                        () => _setLastMonth(provider),
                       ),
                       const SizedBox(width: 8),
                       _buildQuickOption(
                         context,
                         'Last 3 Months',
-                            () => _setLastThreeMonths(provider),
+                        () => _setLastThreeMonths(provider),
                       ),
+                      if (showTrendsOptions) ...[
+                        const SizedBox(width: 8),
+                        _buildQuickOption(
+                          context,
+                          'Last 6 Months',
+                          () => _setLastMonths(provider, 6),
+                        ),
+                        const SizedBox(width: 8),
+                        _buildQuickOption(
+                          context,
+                          'Last 1 Year',
+                          () => _setLastMonths(provider, 12),
+                        ),
+                      ],
                       const SizedBox(width: 8),
                       _buildQuickOption(
                         context,
                         'All Time',
-                            () => _setAllTime(provider),
+                        () => _setAllTime(provider),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildQuickOption(
+                        context,
+                        'Custom',
+                        () => _selectCustomRange(context, provider),
                       ),
                     ],
                   ),
@@ -129,6 +150,12 @@ class DateRangeSelector extends StatelessWidget {
     // Start from 3 months ago (beginning of that month)
     final start = DateTime(now.year, now.month - 2, 1);
     // End at current date
+    provider.setDateRange(start, now);
+  }
+
+  void _setLastMonths(TransactionProvider provider, int months) {
+    final now = DateTime.now();
+    final start = DateTime(now.year, now.month - (months - 1), 1);
     provider.setDateRange(start, now);
   }
 

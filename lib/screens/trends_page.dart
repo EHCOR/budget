@@ -52,7 +52,7 @@ class _TrendsPageState extends State<TrendsPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Date Range Selector
-                        const DateRangeSelector(),
+                        const DateRangeSelector(showTrendsOptions: true),
                         const SizedBox(height: 24),
 
                         // Monthly Category Spending Chart

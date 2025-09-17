@@ -449,35 +449,36 @@ class TransactionProvider extends ChangeNotifier {
   }
 
   // Get monthly category data for trends
-  Map<String, Map<String, Map<String, double>>> getMonthlyCategoryData(int months) {
+  Map<String, Map<String, Map<String, double>>> getMonthlyCategoryData() {
     final Map<String, Map<String, Map<String, double>>> result = {};
-    final now = DateTime.now();
+    final transactionsInRange = filteredTransactions;
 
-    for (int i = months - 1; i >= 0; i--) {
-      final month = DateTime(now.year, now.month - i, 1);
-      final monthKey = DateFormat('MMM yyyy').format(month);
-      final startOfMonth = DateTime(month.year, month.month, 1);
-      final endOfMonth = DateTime(month.year, month.month + 1, 0);
+    if (transactionsInRange.isEmpty) {
+      return result;
+    }
 
-      final monthTransactions = _transactions.where((t) =>
-        t.date.isAfter(startOfMonth.subtract(const Duration(days: 1))) &&
-        t.date.isBefore(endOfMonth.add(const Duration(days: 1)))
-      ).toList();
+    // Determine the range of months from the filtered transactions
+    final firstDate = transactionsInRange.map((t) => t.date).reduce((a, b) => a.isBefore(b) ? a : b);
+    final lastDate = transactionsInRange.map((t) => t.date).reduce((a, b) => a.isAfter(b) ? a : b);
 
-      result[monthKey] = {
-        'income': <String, double>{},
-        'expense': <String, double>{},
-      };
+    DateTime currentMonth = DateTime(firstDate.year, firstDate.month, 1);
+    while (currentMonth.isBefore(lastDate) || currentMonth.isAtSameMomentAs(lastDate)) {
+      final monthKey = DateFormat('MMM yyyy').format(currentMonth);
+      result[monthKey] = {'income': {}, 'expense': {}};
+      currentMonth = DateTime(currentMonth.year, currentMonth.month + 1, 1);
+    }
 
-      // Group by category and type
-      for (var transaction in monthTransactions) {
-        final category = getCategoryById(transaction.categoryId);
-        final categoryName = category?.name ?? 'Unknown';
-        final type = transaction.type == TransactionType.income ? 'income' : 'expense';
-        final amount = transaction.amount.abs();
+    // Populate the data
+    for (var transaction in transactionsInRange) {
+      final monthKey = DateFormat('MMM yyyy').format(transaction.date);
+      final category = getCategoryById(transaction.categoryId);
+      final categoryName = category?.name ?? 'Unknown';
+      final type = transaction.type == TransactionType.income ? 'income' : 'expense';
+      final amount = transaction.amount.abs();
 
+      if (result.containsKey(monthKey)) {
         result[monthKey]![type]![categoryName] =
-          (result[monthKey]![type]![categoryName] ?? 0) + amount;
+            (result[monthKey]![type]![categoryName] ?? 0) + amount;
       }
     }
 
