@@ -448,6 +448,52 @@ class TransactionProvider extends ChangeNotifier {
     return stats;
   }
 
+  // Get monthly category data for trends
+  Map<String, Map<String, Map<String, double>>> getMonthlyCategoryData(int months) {
+    final Map<String, Map<String, Map<String, double>>> result = {};
+    final now = DateTime.now();
+
+    for (int i = months - 1; i >= 0; i--) {
+      final month = DateTime(now.year, now.month - i, 1);
+      final monthKey = DateFormat('MMM yyyy').format(month);
+      final startOfMonth = DateTime(month.year, month.month, 1);
+      final endOfMonth = DateTime(month.year, month.month + 1, 0);
+
+      final monthTransactions = _transactions.where((t) =>
+        t.date.isAfter(startOfMonth.subtract(const Duration(days: 1))) &&
+        t.date.isBefore(endOfMonth.add(const Duration(days: 1)))
+      ).toList();
+
+      result[monthKey] = {
+        'income': <String, double>{},
+        'expense': <String, double>{},
+      };
+
+      // Group by category and type
+      for (var transaction in monthTransactions) {
+        final category = getCategoryById(transaction.categoryId);
+        final categoryName = category?.name ?? 'Unknown';
+        final type = transaction.type == TransactionType.income ? 'income' : 'expense';
+        final amount = transaction.amount.abs();
+
+        result[monthKey]![type]![categoryName] =
+          (result[monthKey]![type]![categoryName] ?? 0) + amount;
+      }
+    }
+
+    return result;
+  }
+
+  // Get category colors map for charts
+  Map<String, Color> getCategoryColorsMap() {
+    final Map<String, Color> colors = {};
+    for (var category in _categories) {
+      colors[category.name] = category.color;
+    }
+    colors['Unknown'] = Colors.grey;
+    return colors;
+  }
+
   // Export data as JSON string
   Future<String> exportDataAsJson() async {
     return await StorageService.exportData();

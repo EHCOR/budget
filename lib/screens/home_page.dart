@@ -6,6 +6,7 @@ import 'package:csv/csv.dart';
 import 'package:provider/provider.dart';
 import 'dashboard_page.dart';
 import 'transactions_page.dart';
+import 'trends_page.dart';
 import 'categories_page.dart';
 import 'settings_page.dart';
 import '../widgets/add_transaction_dialog.dart';
@@ -26,6 +27,7 @@ class _HomePageState extends State<HomePage> {
   final List<Widget> _pages = [
     const DashboardPage(),
     const TransactionsPage(),
+    const TrendsPage(),
     const CategoriesPage(),
     const SettingsPage(),
   ];
@@ -33,6 +35,7 @@ class _HomePageState extends State<HomePage> {
   final List<String> _titles = [
     'Dashboard',
     'Transactions',
+    'Trends',
     'Categories',
     'Settings',
   ];
@@ -62,6 +65,11 @@ class _HomePageState extends State<HomePage> {
             icon: Icon(Icons.receipt_long_outlined),
             activeIcon: Icon(Icons.receipt_long),
             label: 'Transactions',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.trending_up_outlined),
+            activeIcon: Icon(Icons.trending_up),
+            label: 'Trends',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.category_outlined),
