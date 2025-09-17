@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../providers/transaction_provider.dart';
 import '../models/transaction.dart';
+import '../models/category.dart';
 import '../widgets/date_range_selector.dart';
 
 class TransactionsPage extends StatefulWidget {
@@ -389,12 +390,18 @@ class _TransactionsPageState extends State<TransactionsPage> {
                 ),
                 title: Text(category.name),
                 trailing: isSelected ? const Icon(Icons.check, color: Colors.green) : null,
-                onTap: () {
-                  provider.updateTransactionCategory(transaction.id, category.id);
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Category updated to ${category.name}')),
-                  );
+                onTap: () async {
+                  // Check if this transaction is currently uncategorized
+                  if (transaction.categoryId == 'uncategorized') {
+                    Navigator.pop(context);
+                    await _handleUncategorizedSelection(transaction, category, provider);
+                  } else {
+                    provider.updateTransactionCategory(transaction.id, category.id);
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Category updated to ${category.name}')),
+                    );
+                  }
                 },
               );
             },
@@ -619,5 +626,113 @@ class _TransactionsPageState extends State<TransactionsPage> {
         );
       },
     );
+  }
+
+  Future<void> _handleUncategorizedSelection(Transaction transaction, Category category, TransactionProvider provider) async {
+    // Ask if user wants to create a new tag for this transaction
+    final bool? createTag = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Create Smart Tag?'),
+        content: Text(
+          'Would you like to create a smart tag to automatically categorize similar transactions to "${category.name}"?\n\n'
+          'This will help categorize future transactions with similar descriptions.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('No, just this transaction'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Yes, create smart tag'),
+          ),
+        ],
+      ),
+    );
+
+    if (createTag == true) {
+      await _createTagAndCategorize(transaction, category, provider);
+    } else {
+      // Just update this single transaction
+      await provider.updateTransactionCategory(transaction.id, category.id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Category updated to ${category.name}')),
+        );
+      }
+    }
+  }
+
+  Future<void> _createTagAndCategorize(Transaction transaction, Category category, TransactionProvider provider) async {
+    // Show dialog to get tag input
+    final String? tag = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        final controller = TextEditingController();
+        return AlertDialog(
+          title: const Text('Create Smart Tag'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Transaction: ${transaction.description}'),
+              const SizedBox(height: 16),
+              const Text('Enter a keyword that will help identify similar transactions:'),
+              const SizedBox(height: 8),
+              TextField(
+                controller: controller,
+                decoration: const InputDecoration(
+                  labelText: 'Tag/Keyword',
+                  hintText: 'e.g., "starbucks", "gas station", "pharmacy"',
+                  border: OutlineInputBorder(),
+                ),
+                autofocus: true,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final tag = controller.text.trim();
+                if (tag.isNotEmpty) {
+                  Navigator.of(context).pop(tag);
+                }
+              },
+              child: const Text('Create Tag'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (tag != null && tag.isNotEmpty) {
+      // Add the tag to the category and recategorize transactions
+      final updatedKeywords = [...category.keywords, tag.toLowerCase()];
+      final updatedCategory = category.copyWith(keywords: updatedKeywords);
+
+      await provider.updateCategory(updatedCategory);
+
+      // Recategorize all transactions with the new keywords
+      final results = await provider.updateCategoryAndRecategorize(updatedCategory, updatedKeywords);
+
+      final added = results['added'] ?? 0;
+      final message = added > 1
+          ? 'Smart tag "$tag" created! Categorized $added transactions to ${category.name}'
+          : 'Smart tag "$tag" created! Transaction categorized to ${category.name}';
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
   }
 }
