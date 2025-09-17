@@ -214,14 +214,123 @@ class TransactionProvider extends ChangeNotifier {
     final lowerDesc = description.toLowerCase();
 
     for (var category in _categories) {
-      for (var keyword in category.keywords) {
-        if (lowerDesc.contains(keyword.toLowerCase())) {
-          return category.id;
-        }
+      if (_matchesKeywords(lowerDesc, category.keywords)) {
+        return category.id;
       }
     }
 
     return 'uncategorized';
+  }
+
+  // Helper method to check if a description matches any of the given keywords
+  bool _matchesKeywords(String lowerDescription, List<String> keywords) {
+    for (var keyword in keywords) {
+      if (lowerDescription.contains(keyword.toLowerCase())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Count transactions that would match a set of keywords
+  int countTransactionsByKeywords(List<String> keywords) {
+    if (keywords.isEmpty) return 0;
+
+    int count = 0;
+    for (var transaction in _transactions) {
+      // Only consider uncategorized transactions
+      if (transaction.categoryId == 'uncategorized') {
+        final lowerDesc = transaction.description.toLowerCase();
+        if (_matchesKeywords(lowerDesc, keywords)) {
+          count++;
+        }
+      }
+    }
+    return count;
+  }
+
+  // Recategorize transactions based on keywords
+  Future<int> recategorizeTransactionsByKeywords(String categoryId, List<String> keywords) async {
+    if (keywords.isEmpty) return 0;
+
+    int recategorizedCount = 0;
+
+    for (var transaction in _transactions) {
+      // Only recategorize uncategorized transactions
+      if (transaction.categoryId == 'uncategorized') {
+        final lowerDesc = transaction.description.toLowerCase();
+        if (_matchesKeywords(lowerDesc, keywords)) {
+          transaction.categoryId = categoryId;
+          recategorizedCount++;
+        }
+      }
+    }
+
+    if (recategorizedCount > 0) {
+      await StorageService.saveTransactions(_transactions);
+      notifyListeners();
+    }
+
+    return recategorizedCount;
+  }
+
+  // Calculate the number of transactions that will be changed by updating a category
+  Map<String, int> calculateCategoryChanges(Category category, List<String> newKeywords) {
+    int added = 0;
+    int removed = 0;
+
+    // Find transactions that will be removed from this category
+    final currentTransactions = getTransactionsByCategory(category.id);
+    for (var transaction in currentTransactions) {
+      final lowerDesc = transaction.description.toLowerCase();
+      if (!_matchesKeywords(lowerDesc, newKeywords)) {
+        removed++;
+      }
+    }
+
+    // Find transactions that will be added to this category from uncategorized
+    final uncategorized = _transactions.where((t) => t.categoryId == 'uncategorized');
+    for (var transaction in uncategorized) {
+      final lowerDesc = transaction.description.toLowerCase();
+      if (_matchesKeywords(lowerDesc, newKeywords)) {
+        added++;
+      }
+    }
+
+    return {'added': added, 'removed': removed};
+  }
+
+  // Update category and recategorize transactions based on new keywords
+  Future<Map<String, int>> updateCategoryAndRecategorize(Category category, List<String> newKeywords) async {
+    int added = 0;
+    int removed = 0;
+
+    // Remove transactions that no longer match the new keywords
+    final currentTransactions = _transactions.where((t) => t.categoryId == category.id).toList();
+    for (var transaction in currentTransactions) {
+      final lowerDesc = transaction.description.toLowerCase();
+      if (!_matchesKeywords(lowerDesc, newKeywords)) {
+        transaction.categoryId = 'uncategorized';
+        removed++;
+      }
+    }
+
+    // Add transactions from uncategorized that now match the new keywords
+    final uncategorized = _transactions.where((t) => t.categoryId == 'uncategorized').toList();
+    for (var transaction in uncategorized) {
+      final lowerDesc = transaction.description.toLowerCase();
+      if (_matchesKeywords(lowerDesc, newKeywords)) {
+        transaction.categoryId = category.id;
+        added++;
+      }
+    }
+
+    if (added > 0 || removed > 0) {
+      await StorageService.saveTransactions(_transactions);
+      notifyListeners();
+    }
+
+    return {'added': added, 'removed': removed};
   }
 
   // Get transactions by category

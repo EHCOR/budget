@@ -177,7 +177,7 @@ class CategoriesPage extends StatelessWidget {
               child: const Text('Cancel'),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 if (nameController.text.isNotEmpty) {
                   final provider = Provider.of<TransactionProvider>(context, listen: false);
                   final keywords = keywordsController.text
@@ -186,20 +186,47 @@ class CategoriesPage extends StatelessWidget {
                       .where((k) => k.isNotEmpty)
                       .toList();
 
-                  final category = Category(
-                    id: 'cat_${DateTime.now().millisecondsSinceEpoch}',
-                    name: nameController.text,
-                    color: selectedColor,
-                    icon: selectedIcon,
-                    keywords: keywords,
+                  final matchingCount = provider.countTransactionsByKeywords(keywords);
+
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Confirm Category'),
+                      content: Text(
+                        'This category will match $matchingCount existing uncategorized transactions. Do you want to proceed?'
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: const Text('Cancel'),
+                        ),
+                        ElevatedButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          child: const Text('Confirm'),
+                        ),
+                      ],
+                    ),
                   );
 
-                  provider.addCategory(category);
-                  Navigator.pop(context);
+                  if (confirmed == true) {
+                    final category = Category(
+                      id: 'cat_${DateTime.now().millisecondsSinceEpoch}',
+                      name: nameController.text,
+                      color: selectedColor,
+                      icon: selectedIcon,
+                      keywords: keywords,
+                    );
 
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Category "${category.name}" added')),
-                  );
+                    await provider.addCategory(category);
+                    final recategorizedCount = await provider.recategorizeTransactionsByKeywords(category.id, keywords);
+                    if (context.mounted) {
+                      Navigator.pop(context);
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Category "${category.name}" added and $recategorizedCount transactions categorized')),
+                      );
+                    }
+                  }
                 }
               },
               child: const Text('Add'),
@@ -320,7 +347,7 @@ class CategoriesPage extends StatelessWidget {
               child: const Text('Cancel'),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 if (nameController.text.isNotEmpty) {
                   final provider = Provider.of<TransactionProvider>(context, listen: false);
                   final keywords = keywordsController.text
@@ -329,20 +356,55 @@ class CategoriesPage extends StatelessWidget {
                       .where((k) => k.isNotEmpty)
                       .toList();
 
-                  final updatedCategory = Category(
-                    id: category.id,
-                    name: nameController.text,
-                    color: selectedColor,
-                    icon: selectedIcon,
-                    keywords: keywords,
-                  );
+                  // Calculate the impact of changes
+                  final changes = provider.calculateCategoryChanges(category, keywords);
+                  final totalChanges = changes['added']! + changes['removed']!;
 
-                  provider.updateCategory(updatedCategory);
-                  Navigator.pop(context);
+                  bool proceed = true;
+                  if (totalChanges > 0) {
+                    proceed = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Confirm Changes'),
+                        content: Text(
+                          'This update will:\n'
+                          '• Add ${changes['added']} transactions to this category\n'
+                          '• Remove ${changes['removed']} transactions from this category\n\n'
+                          'Do you want to proceed?'
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            child: const Text('Cancel'),
+                          ),
+                          ElevatedButton(
+                            onPressed: () => Navigator.of(context).pop(true),
+                            child: const Text('Confirm'),
+                          ),
+                        ],
+                      ),
+                    ) ?? false;
+                  }
 
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Category "${updatedCategory.name}" updated')),
-                  );
+                  if (proceed) {
+                    final updatedCategory = Category(
+                      id: category.id,
+                      name: nameController.text,
+                      color: selectedColor,
+                      icon: selectedIcon,
+                      keywords: keywords,
+                    );
+
+                    await provider.updateCategory(updatedCategory);
+                    final actualChanges = await provider.updateCategoryAndRecategorize(updatedCategory, keywords);
+                    if (context.mounted) {
+                      Navigator.pop(context);
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Category "${updatedCategory.name}" updated: ${actualChanges['added']} added, ${actualChanges['removed']} removed')),
+                      );
+                    }
+                  }
                 }
               },
               child: const Text('Update'),
