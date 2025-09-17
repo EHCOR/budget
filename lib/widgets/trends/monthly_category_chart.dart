@@ -1,9 +1,12 @@
 // widgets/trends/monthly_category_chart.dart
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../providers/transaction_provider.dart';
+import '../../utils/statistics_service.dart';
+import 'category_info_popup.dart';
 
 class MonthlyCategoryChart extends StatefulWidget {
   const MonthlyCategoryChart({super.key});
@@ -14,6 +17,17 @@ class MonthlyCategoryChart extends StatefulWidget {
 
 class _MonthlyCategoryChartState extends State<MonthlyCategoryChart> {
   int _selectedMonths = 6;
+  int? _touchedGroupIndex;
+  int? _touchedRodIndex;
+  String? _hoveredCategory;
+  String? _pendingHoveredCategory;
+  Timer? _hoverDebounceTimer;
+
+  @override
+  void dispose() {
+    _hoverDebounceTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,6 +57,8 @@ class _MonthlyCategoryChartState extends State<MonthlyCategoryChart> {
                 ),
                 const SizedBox(height: 16),
                 _buildLegend(data, categoryColors),
+                const SizedBox(height: 12),
+                _buildInteractionHint(),
               ],
             ),
           ),
@@ -126,22 +142,85 @@ class _MonthlyCategoryChartState extends State<MonthlyCategoryChart> {
       alignment: BarChartAlignment.spaceAround,
       maxY: maxValue * 1.1,
       barTouchData: BarTouchData(
+        enabled: true,
+        handleBuiltInTouches: true,
         touchTooltipData: BarTouchTooltipData(
-          tooltipBgColor: Colors.blueGrey,
+          tooltipBgColor: Colors.blueGrey.withOpacity(0.9),
+          tooltipRoundedRadius: 8,
+          tooltipPadding: const EdgeInsets.all(8),
           getTooltipItem: (group, groupIndex, rod, rodIndex) {
             final monthKey = months[group.x.toInt()];
             final type = rodIndex == 0 ? 'Income' : 'Expense';
-            final value = NumberFormat.currency(symbol: provider.currencySymbol)
+            final monthData = data[monthKey]![type.toLowerCase()]!;
+
+            final totalValue = NumberFormat.currency(symbol: provider.currencySymbol)
                 .format(rod.toY);
+
+            // Check if we have a specific hovered category
+            if (_hoveredCategory != null && monthData.containsKey(_hoveredCategory)) {
+              final categoryValue = monthData[_hoveredCategory]!;
+              final categoryValueStr = NumberFormat.currency(symbol: provider.currencySymbol)
+                  .format(categoryValue);
+              final percentage = (categoryValue / rod.toY * 100).toStringAsFixed(1);
+
+              return BarTooltipItem(
+                '$monthKey\n$type: $totalValue\n\n$_hoveredCategory:\n$categoryValueStr ($percentage%)',
+                const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              );
+            }
+
+            // Fallback: Show breakdown of top categories in this bar
+            final sortedCategories = monthData.entries.toList()
+              ..sort((a, b) => b.value.compareTo(a.value));
+
+            final topCategories = sortedCategories.take(3).toList();
+
+            String tooltipText = '$monthKey\n$type: $totalValue\n';
+
+            if (topCategories.isNotEmpty) {
+              tooltipText += '\nTop Categories:';
+              for (var entry in topCategories) {
+                final categoryValueStr = NumberFormat.currency(symbol: provider.currencySymbol)
+                    .format(entry.value);
+                final percentage = (entry.value / rod.toY * 100).toStringAsFixed(0);
+                tooltipText += '\n• ${entry.key}: $categoryValueStr ($percentage%)';
+              }
+            }
+
             return BarTooltipItem(
-              '$monthKey\n$type: $value',
+              tooltipText,
               const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
+                fontSize: 11,
               ),
             );
           },
         ),
+        touchCallback: (event, response) {
+          setState(() {
+            if (event is FlTapUpEvent && response?.spot != null) {
+              _handleStackTap(event, response!, data, categoryColors, provider);
+            }
+
+            // Handle hover for individual stack pieces
+            if (response?.spot != null) {
+              _touchedGroupIndex = response!.spot!.touchedBarGroupIndex;
+              _touchedRodIndex = response.spot!.touchedRodDataIndex;
+
+              // Calculate which category is being hovered based on touch response
+              _updateHoveredCategoryFromTouch(response, data);
+            } else {
+              _touchedGroupIndex = null;
+              _touchedRodIndex = null;
+              _clearHoverWithDebounce();
+            }
+          });
+        },
       ),
       titlesData: FlTitlesData(
         show: true,
@@ -218,9 +297,9 @@ class _MonthlyCategoryChartState extends State<MonthlyCategoryChart> {
         barsSpace: 4,
         barRods: [
           // Income bar
-          _buildStackedBar(monthData['income']!, categoryColors, true),
+          _buildStackedBar(monthData['income']!, categoryColors, true, index, 0),
           // Expense bar
-          _buildStackedBar(monthData['expense']!, categoryColors, false),
+          _buildStackedBar(monthData['expense']!, categoryColors, false, index, 1),
         ],
       );
     });
@@ -230,11 +309,14 @@ class _MonthlyCategoryChartState extends State<MonthlyCategoryChart> {
     Map<String, double> categoryData,
     Map<String, Color> categoryColors,
     bool isIncome,
+    int groupIndex,
+    int rodIndex,
   ) {
     final sortedCategories = categoryData.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
     final totalValue = categoryData.values.fold(0.0, (sum, value) => sum + value);
+    final isHighlighted = _touchedGroupIndex == groupIndex && _touchedRodIndex == rodIndex;
 
     List<BarChartRodStackItem> stackItems = [];
     double currentValue = 0;
@@ -242,12 +324,38 @@ class _MonthlyCategoryChartState extends State<MonthlyCategoryChart> {
     for (var entry in sortedCategories) {
       final categoryName = entry.key;
       final value = entry.value;
-      final color = categoryColors[categoryName] ?? Colors.grey;
+      final baseColor = categoryColors[categoryName] ?? Colors.grey;
+
+      // Check if this specific category is being hovered
+      final isHovered = _hoveredCategory == categoryName;
+
+      // Adjust color based on income/expense, highlight state, and hover state
+      Color color;
+      if (isHovered) {
+        // Brighten the hovered category
+        color = isIncome
+          ? baseColor.withOpacity(1.0)
+          : baseColor;
+      } else if (isHighlighted) {
+        color = isIncome
+          ? baseColor.withOpacity(1.0)
+          : baseColor.withOpacity(1.0);
+      } else if (_hoveredCategory != null) {
+        // Dim other categories when one is hovered
+        color = isIncome
+          ? baseColor.withOpacity(0.5)
+          : baseColor.withOpacity(0.6);
+      } else {
+        // Normal state
+        color = isIncome
+          ? baseColor.withOpacity(0.8)
+          : baseColor.withOpacity(0.9);
+      }
 
       stackItems.add(BarChartRodStackItem(
         currentValue,
         currentValue + value,
-        isIncome ? color.withOpacity(0.8) : color,
+        color,
       ));
 
       currentValue += value;
@@ -255,12 +363,9 @@ class _MonthlyCategoryChartState extends State<MonthlyCategoryChart> {
 
     return BarChartRodData(
       toY: totalValue,
-      color: isIncome ? Colors.green : Colors.red,
-      width: 20,
-      borderRadius: const BorderRadius.only(
-        topLeft: Radius.circular(4),
-        topRight: Radius.circular(4),
-      ),
+      color: Colors.transparent, // Use transparent as stack items provide the color
+      width: isHighlighted ? 24 : 20, // Slightly wider when highlighted
+      borderRadius: BorderRadius.circular(4),
       rodStackItems: stackItems,
     );
   }
@@ -318,6 +423,88 @@ class _MonthlyCategoryChartState extends State<MonthlyCategoryChart> {
     );
   }
 
+  void _handleStackTap(
+    FlTapUpEvent event,
+    BarTouchResponse response,
+    Map<String, Map<String, Map<String, double>>> data,
+    Map<String, Color> categoryColors,
+    TransactionProvider provider,
+  ) {
+    final spot = response.spot!;
+    final groupIndex = spot.touchedBarGroupIndex;
+    final rodIndex = spot.touchedRodDataIndex;
+
+    if (groupIndex >= 0 && groupIndex < data.length) {
+      final months = data.keys.toList();
+      final monthKey = months[groupIndex];
+      final type = rodIndex == 0 ? 'income' : 'expense';
+      final monthData = data[monthKey]![type]!;
+
+      if (monthData.isNotEmpty) {
+        // Find which category was clicked based on the touch position and response
+        final categoryName = _findTouchedCategoryAdvanced(
+          response,
+          groupIndex,
+          rodIndex,
+          monthData,
+          data,
+        );
+
+        if (categoryName != null) {
+          final categoryColor = categoryColors[categoryName] ?? Colors.grey;
+
+          // Calculate statistics for this specific category
+          final statistics = StatisticsService.getCategoryStatistics(
+            categoryName,
+            data,
+            type,
+          );
+
+          // Convert local position to global screen coordinates
+          final renderBox = context.findRenderObject() as RenderBox;
+          final globalPosition = renderBox.localToGlobal(event.localPosition);
+
+          // Show popup at global touch position
+          CategoryInfoPopup.show(
+            context,
+            statistics,
+            provider.currencySymbol,
+            categoryColor,
+            type,
+            globalPosition,
+          );
+        }
+      }
+    }
+  }
+
+  String? _findTouchedCategoryAdvanced(
+    BarTouchResponse response,
+    int groupIndex,
+    int rodIndex,
+    Map<String, double> monthData,
+    Map<String, Map<String, Map<String, double>>> data,
+  ) {
+    // Get sorted categories (same order as in our stack items)
+    final sortedCategories = monthData.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    if (sortedCategories.isEmpty) return null;
+
+    // For now, implement a cycling approach based on repeated touches
+    // This provides a good user experience where users can click through categories
+    if (_hoveredCategory != null && monthData.containsKey(_hoveredCategory)) {
+      final currentIndex = sortedCategories.indexWhere((e) => e.key == _hoveredCategory);
+      if (currentIndex >= 0) {
+        final nextIndex = (currentIndex + 1) % sortedCategories.length;
+        return sortedCategories[nextIndex].key;
+      }
+    }
+
+    // Return the largest category as default
+    return sortedCategories.first.key;
+  }
+
   double _getMaxValue(Map<String, Map<String, Map<String, double>>> data) {
     double maxValue = 0;
 
@@ -332,5 +519,93 @@ class _MonthlyCategoryChartState extends State<MonthlyCategoryChart> {
     }
 
     return maxValue > 0 ? maxValue : 100;
+  }
+
+  void _updateHoveredCategoryFromTouch(
+    BarTouchResponse response,
+    Map<String, Map<String, Map<String, double>>> data,
+  ) {
+    final spot = response.spot!;
+    final groupIndex = spot.touchedBarGroupIndex;
+    final rodIndex = spot.touchedRodDataIndex;
+
+    if (groupIndex >= 0 && groupIndex < data.length) {
+      final months = data.keys.toList();
+      final monthKey = months[groupIndex];
+      final type = rodIndex == 0 ? 'income' : 'expense';
+      final monthData = data[monthKey]![type]!;
+
+      if (monthData.isNotEmpty) {
+        // Get the category that would be hovered
+        final sortedCategories = monthData.entries.toList()
+          ..sort((a, b) => b.value.compareTo(a.value));
+
+        final newHoveredCategory = sortedCategories.first.key;
+
+        // Only update if it's different from current
+        if (newHoveredCategory != _pendingHoveredCategory) {
+          _pendingHoveredCategory = newHoveredCategory;
+
+          // Cancel existing timer
+          _hoverDebounceTimer?.cancel();
+
+          // Set up new debounced timer
+          _hoverDebounceTimer = Timer(const Duration(milliseconds: 200), () {
+            if (mounted && _pendingHoveredCategory != null) {
+              setState(() {
+                _hoveredCategory = _pendingHoveredCategory;
+              });
+            }
+          });
+        }
+      }
+    } else {
+      // Clear hover when not over any bar
+      _clearHoverWithDebounce();
+    }
+  }
+
+  void _clearHoverWithDebounce() {
+    _pendingHoveredCategory = null;
+    _hoverDebounceTimer?.cancel();
+
+    _hoverDebounceTimer = Timer(const Duration(milliseconds: 100), () {
+      if (mounted) {
+        setState(() {
+          _hoveredCategory = null;
+        });
+      }
+    });
+  }
+
+  Widget _buildInteractionHint() {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.blue.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.blue.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.info_outline,
+            size: 16,
+            color: Colors.blue.shade700,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Hover for details • Tap bars for statistics',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.blue.shade700,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
