@@ -7,6 +7,7 @@ import '../providers/transaction_provider.dart';
 import '../models/transaction.dart';
 import '../widgets/date_range_selector.dart';
 import '../widgets/transaction_details_popup.dart';
+import 'settings_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -33,6 +34,18 @@ class _DashboardPageState extends State<DashboardPage> {
       appBar: AppBar(
         title: const Text('Dashboard'),
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsPage()),
+              );
+            },
+            tooltip: 'Settings',
+          ),
+        ],
       ),
       body: Consumer<TransactionProvider>(
         builder: (context, provider, child) {

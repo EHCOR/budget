@@ -6,6 +6,7 @@ import '../providers/transaction_provider.dart';
 import '../models/transaction.dart';
 import '../widgets/date_range_selector.dart';
 import '../widgets/transaction_details_popup.dart';
+import 'settings_page.dart';
 
 class TransactionsPage extends StatefulWidget {
   const TransactionsPage({super.key});
@@ -34,13 +35,14 @@ class _TransactionsPageState extends State<TransactionsPage> {
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
         actions: [
           IconButton(
-            icon: const Icon(Icons.auto_fix_high),
-            onPressed: () => _showRecalculateDialog(context),
-            tooltip: 'Recalculate Categories',
-          ),
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: _showFilterSheet,
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsPage()),
+              );
+            },
+            tooltip: 'Settings',
           ),
         ],
       ),
@@ -57,26 +59,43 @@ class _TransactionsPageState extends State<TransactionsPage> {
                     const DateRangeSelector(),
                     const SizedBox(height: 12),
 
-                    // Search bar
-                    TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        hintText: 'Search transactions...',
-                        prefixIcon: const Icon(Icons.search),
-                        suffixIcon: _searchQuery.isNotEmpty
-                            ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() => _searchQuery = '');
-                          },
-                        )
-                            : null,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                    // Search bar with action buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _searchController,
+                            decoration: InputDecoration(
+                              hintText: 'Search transactions...',
+                              prefixIcon: const Icon(Icons.search),
+                              suffixIcon: _searchQuery.isNotEmpty
+                                  ? IconButton(
+                                icon: const Icon(Icons.clear),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() => _searchQuery = '');
+                                },
+                              )
+                                  : null,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onChanged: (value) => setState(() => _searchQuery = value.toLowerCase()),
+                          ),
                         ),
-                      ),
-                      onChanged: (value) => setState(() => _searchQuery = value.toLowerCase()),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.auto_fix_high),
+                          onPressed: () => _showRecalculateDialog(context),
+                          tooltip: 'Recalculate Categories',
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.filter_list),
+                          onPressed: _showFilterSheet,
+                          tooltip: 'Filter',
+                        ),
+                      ],
                     ),
 
                     // Active filters

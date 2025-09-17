@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/transaction_provider.dart';
 import '../widgets/trends/monthly_category_chart.dart';
 import '../widgets/date_range_selector.dart';
+import 'settings_page.dart';
 
 class TrendsPage extends StatefulWidget {
   const TrendsPage({super.key});
@@ -21,6 +22,18 @@ class _TrendsPageState extends State<TrendsPage> {
       appBar: AppBar(
         title: const Text('Trends'),
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsPage()),
+              );
+            },
+            tooltip: 'Settings',
+          ),
+        ],
       ),
       body: MouseRegion(
         onHover: (event) {

@@ -29,7 +29,6 @@ class _HomePageState extends State<HomePage> {
     const TransactionsPage(),
     const TrendsPage(),
     const CategoriesPage(),
-    const SettingsPage(),
   ];
 
   final List<String> _titles = [
@@ -37,7 +36,6 @@ class _HomePageState extends State<HomePage> {
     'Transactions',
     'Trends',
     'Categories',
-    'Settings',
   ];
 
   @override
@@ -75,11 +73,6 @@ class _HomePageState extends State<HomePage> {
             icon: Icon(Icons.category_outlined),
             activeIcon: Icon(Icons.category),
             label: 'Categories',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings_outlined),
-            activeIcon: Icon(Icons.settings),
-            label: 'Settings',
           ),
         ],
       ),
