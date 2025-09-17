@@ -97,6 +97,7 @@ class StatisticsService {
       volatility: volatility,
       dataPoints: values.length,
       timeframePeriod: '${months.length} months',
+      hasSufficientData: values.length >= 2, // Need at least 2 data points for meaningful trends
     );
   }
 
@@ -157,6 +158,7 @@ class CategoryStatistics {
   final double volatility;
   final int dataPoints;
   final String timeframePeriod;
+  final bool hasSufficientData;
 
   CategoryStatistics({
     required this.categoryName,
@@ -168,6 +170,7 @@ class CategoryStatistics {
     required this.volatility,
     required this.dataPoints,
     required this.timeframePeriod,
+    required this.hasSufficientData,
   });
 
   String get trendIcon {

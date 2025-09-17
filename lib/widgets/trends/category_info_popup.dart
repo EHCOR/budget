@@ -194,52 +194,75 @@ class CategoryInfoPopup extends StatelessWidget {
             Icons.trending_flat,
           ),
 
-          // Projected
-          _buildStatItem(
-            'Projected Next',
-            NumberFormat.currency(symbol: currencySymbol).format(statistics.projected),
-            Icons.trending_up,
-          ),
+          // Projected (only show if sufficient data)
+          if (statistics.hasSufficientData)
+            _buildStatItem(
+              'Projected Next',
+              NumberFormat.currency(symbol: currencySymbol).format(statistics.projected),
+              Icons.trending_up,
+            ),
 
           const SizedBox(height: 8),
           const Divider(),
           const SizedBox(height: 8),
 
-          // Trend Analysis
-          Row(
-            children: [
-              Icon(
-                _getTrendIcon(statistics.trend),
-                size: 16,
-                color: _getTrendColor(statistics.trend),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                statistics.trendDescription,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
+          // Trend Analysis or Insufficient Data Message
+          if (statistics.hasSufficientData)
+            Row(
+              children: [
+                Icon(
+                  _getTrendIcon(statistics.trend),
+                  size: 16,
                   color: _getTrendColor(statistics.trend),
                 ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: _getChangeColor(statistics.percentageChange).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${statistics.percentageChange >= 0 ? '+' : ''}${statistics.percentageChange.toStringAsFixed(1)}%',
+                const SizedBox(width: 6),
+                Text(
+                  statistics.trendDescription,
                   style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: _getChangeColor(statistics.percentageChange),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: _getTrendColor(statistics.trend),
                   ),
                 ),
-              ),
-            ],
-          ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: _getChangeColor(statistics.percentageChange).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${statistics.percentageChange >= 0 ? '+' : ''}${statistics.percentageChange.toStringAsFixed(1)}%',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: _getChangeColor(statistics.percentageChange),
+                    ),
+                  ),
+                ),
+              ],
+            )
+          else
+            Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  size: 16,
+                  color: Colors.grey.shade600,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Trend analysis unavailable - need more data points',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
 
           const SizedBox(height: 8),
 
