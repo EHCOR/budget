@@ -338,6 +338,44 @@ class TransactionProvider extends ChangeNotifier {
     return filteredTransactions.where((t) => t.categoryId == categoryId).toList();
   }
 
+  // Recalculate all transactions for the last 3 months
+  Future<Map<String, int>> recalculateAllTransactions({int months = 3}) async {
+    final now = DateTime.now();
+    final threeMonthsAgo = DateTime(now.year, now.month - months, now.day);
+
+    int recategorized = 0;
+    int alreadyCategorized = 0;
+
+    // Filter transactions to last 3 months
+    final recentTransactions = _transactions.where((t) =>
+      t.date.isAfter(threeMonthsAgo)
+    ).toList();
+
+    for (var transaction in recentTransactions) {
+      // Only recalculate uncategorized transactions or find better matches
+      if (transaction.categoryId == 'uncategorized') {
+        final bestCategory = _findBestCategory(transaction.description);
+        if (bestCategory != 'uncategorized') {
+          transaction.categoryId = bestCategory;
+          recategorized++;
+        }
+      } else {
+        alreadyCategorized++;
+      }
+    }
+
+    if (recategorized > 0) {
+      await StorageService.saveTransactions(_transactions);
+      notifyListeners();
+    }
+
+    return {
+      'recategorized': recategorized,
+      'alreadyCategorized': alreadyCategorized,
+      'total': recentTransactions.length,
+    };
+  }
+
   // Clear all data
   Future<void> clearAllData() async {
     _transactions.clear();

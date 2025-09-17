@@ -33,6 +33,11 @@ class _TransactionsPageState extends State<TransactionsPage> {
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
         actions: [
           IconButton(
+            icon: const Icon(Icons.auto_fix_high),
+            onPressed: () => _showRecalculateDialog(context),
+            tooltip: 'Recalculate Categories',
+          ),
+          IconButton(
             icon: const Icon(Icons.filter_list),
             onPressed: _showFilterSheet,
           ),
@@ -424,6 +429,81 @@ class _TransactionsPageState extends State<TransactionsPage> {
         ],
       ),
     );
+  }
+
+  void _showRecalculateDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Recalculate Categories'),
+        content: const Text(
+          'This will automatically categorize uncategorized transactions from the last 3 months based on your current category keywords.\n\n'
+          'Do you want to proceed?'
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+              await _performRecalculation(context);
+            },
+            child: const Text('Recalculate'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _performRecalculation(BuildContext context) async {
+    final provider = Provider.of<TransactionProvider>(context, listen: false);
+
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        content: Row(
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(width: 16),
+            Text('Recalculating categories...'),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      final results = await provider.recalculateAllTransactions();
+
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Close loading dialog
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Recalculation complete: ${results['recategorized']} transactions recategorized, '
+              '${results['alreadyCategorized']} already categorized '
+              '(${results['total']} total transactions processed)'
+            ),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Close loading dialog
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error during recalculation: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _showFilterSheet() {
