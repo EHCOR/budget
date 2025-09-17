@@ -336,30 +336,54 @@ class _DashboardPageState extends State<DashboardPage> {
             ],
             if (summaries.isNotEmpty) ...[
               const SizedBox(height: 16),
-              ...summaries.take(5).map((summary) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 16,
-                      height: 16,
-                      decoration: BoxDecoration(
-                        color: summary.color,
-                        borderRadius: BorderRadius.circular(4),
+              () {
+                final total = summaries.fold(0.0, (sum, s) => sum + s.amount);
+                return Column(
+                  children: summaries.take(5).map((summary) {
+                    final percentage = (summary.amount / total * 100);
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 16,
+                            height: 16,
+                            decoration: BoxDecoration(
+                              color: summary.color,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Text(summary.categoryName),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '(${percentage.toStringAsFixed(0)}%)',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(
+                            width: 100, // To align the amounts
+                            child: Text(
+                              NumberFormat.currency(symbol: provider.currencySymbol)
+                                  .format(summary.amount),
+                              textAlign: TextAlign.right,
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(summary.categoryName),
-                    ),
-                    Text(
-                      NumberFormat.currency(symbol: provider.currencySymbol)
-                          .format(summary.amount),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-              )),
+                    );
+                  }).toList(),
+                );
+              }(),
             ],
           ],
         ),
