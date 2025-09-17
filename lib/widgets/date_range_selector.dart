@@ -64,6 +64,12 @@ class DateRangeSelector extends StatelessWidget {
                       const SizedBox(width: 8),
                       _buildQuickOption(
                         context,
+                        'Last 3 Months',
+                            () => _setLastThreeMonths(provider),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildQuickOption(
+                        context,
                         'All Time',
                             () => _setAllTime(provider),
                       ),
@@ -116,6 +122,14 @@ class DateRangeSelector extends StatelessWidget {
     final start = DateTime(now.year, now.month - 1, 1);
     final end = DateTime(now.year, now.month, 0);
     provider.setDateRange(start, end);
+  }
+
+  void _setLastThreeMonths(TransactionProvider provider) {
+    final now = DateTime.now();
+    // Start from 3 months ago (beginning of that month)
+    final start = DateTime(now.year, now.month - 2, 1);
+    // End at current date
+    provider.setDateRange(start, now);
   }
 
   void _setAllTime(TransactionProvider provider) {
