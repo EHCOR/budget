@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../providers/transaction_provider.dart';
 import '../models/transaction.dart';
 import '../widgets/date_range_selector.dart';
+import '../widgets/transaction_details_popup.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -479,6 +480,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           : Colors.red,
                     ),
                   ),
+                  onTap: () => TransactionDetailsPopup.show(context, transaction),
                 );
               }),
           ],
