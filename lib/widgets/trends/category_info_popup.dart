@@ -297,17 +297,19 @@ class CategoryInfoPopup extends StatelessWidget {
   Color _getTrendColor(TrendDirection trend) {
     switch (trend) {
       case TrendDirection.increasing:
-        return Colors.green;
+        // For expenses, increasing is bad (red). For income, increasing is good (green)
+        return transactionType == 'expense' ? Colors.red : Colors.green;
       case TrendDirection.decreasing:
-        return Colors.red;
+        // For expenses, decreasing is good (green). For income, decreasing is bad (red)
+        return transactionType == 'expense' ? Colors.green : Colors.red;
       case TrendDirection.stable:
         return Colors.orange;
     }
   }
 
   Color _getChangeColor(double change) {
-    if (change > 5) return Colors.green;
-    if (change < -5) return Colors.red;
-    return Colors.orange;
+    // Use the overall trend color for consistency rather than just period-to-period change
+    // This avoids confusion when short-term and long-term trends differ
+    return _getTrendColor(statistics.trend);
   }
 }

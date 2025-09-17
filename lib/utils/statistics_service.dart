@@ -76,7 +76,9 @@ class StatisticsService {
 
     final currentValue = values.isNotEmpty ? values.last : 0.0;
     final average = calculateAverage(values);
-    final projected = projectNextValue(values);
+    final rawProjected = projectNextValue(values);
+    // For expenses, prevent negative projections (can't make money from spending)
+    final projected = (transactionType == 'expense' && rawProjected < 0) ? 0.0 : rawProjected;
     final trend = calculateTrend(values);
     final volatility = calculateVolatility(values);
 
@@ -113,11 +115,15 @@ class StatisticsService {
       totalExpenseValues.add(expenseTotal);
     }
 
+    // Ensure projected expenses can't go negative (making money from spending)
+    final projectedExpense = projectNextValue(totalExpenseValues);
+    final clampedProjectedExpense = projectedExpense < 0 ? 0.0 : projectedExpense;
+
     return OverallStatistics(
       averageIncome: calculateAverage(totalIncomeValues),
       averageExpense: calculateAverage(totalExpenseValues),
       projectedIncome: projectNextValue(totalIncomeValues),
-      projectedExpense: projectNextValue(totalExpenseValues),
+      projectedExpense: clampedProjectedExpense,
       incomeVolatility: calculateVolatility(totalIncomeValues),
       expenseVolatility: calculateVolatility(totalExpenseValues),
       savingsRate: _calculateSavingsRate(totalIncomeValues, totalExpenseValues),
