@@ -168,18 +168,134 @@ class DateRangeSelector extends StatelessWidget {
   }
 
   Future<void> _selectCustomRange(BuildContext context, TransactionProvider provider) async {
-    final DateTimeRange? picked = await showDateRangePicker(
+    final DateTimeRange? picked = await showDialog<DateTimeRange>(
       context: context,
-      firstDate: DateTime(2000),
-      lastDate: DateTime.now(),
-      initialDateRange: DateTimeRange(
-        start: provider.startDate,
-        end: provider.endDate,
-      ),
+      builder: (BuildContext context) {
+        return CustomDateRangePickerDialog(
+          initialDateRange: DateTimeRange(
+            start: provider.startDate,
+            end: provider.endDate,
+          ),
+        );
+      },
     );
 
     if (picked != null) {
       provider.setDateRange(picked.start, picked.end);
     }
+  }
+}
+
+class CustomDateRangePickerDialog extends StatefulWidget {
+  final DateTimeRange initialDateRange;
+
+  const CustomDateRangePickerDialog({super.key, required this.initialDateRange});
+
+  @override
+  State<CustomDateRangePickerDialog> createState() => _CustomDateRangePickerDialogState();
+}
+
+class _CustomDateRangePickerDialogState extends State<CustomDateRangePickerDialog> {
+  late DateTime _startDate;
+  late DateTime _endDate;
+  final _startDateController = TextEditingController();
+  final _endDateController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _startDate = widget.initialDateRange.start;
+    _endDate = widget.initialDateRange.end;
+    _updateDateText();
+  }
+
+  void _updateDateText() {
+    _startDateController.text = DateFormat.yMMMd().format(_startDate);
+    _endDateController.text = DateFormat.yMMMd().format(_endDate);
+  }
+
+  Future<void> _showCalendar() async {
+    final picked = await showDateRangePicker(
+      context: context,
+      initialDateRange: DateTimeRange(start: _startDate, end: _endDate),
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null) {
+      setState(() {
+        _startDate = picked.start;
+        _endDate = picked.end;
+        _updateDateText();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: SizedBox(
+        width: 400,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 8, 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Select Date Range',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.calendar_month),
+                    onPressed: _showCalendar,
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextField(
+                    controller: _startDateController,
+                    decoration: const InputDecoration(labelText: 'Start Date'),
+                    readOnly: true,
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _endDateController,
+                    decoration: const InputDecoration(labelText: 'End Date'),
+                    readOnly: true,
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel'),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context, DateTimeRange(start: _startDate, end: _endDate));
+                    },
+                    child: const Text('OK'),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
