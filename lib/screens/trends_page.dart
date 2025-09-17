@@ -13,6 +13,8 @@ class TrendsPage extends StatefulWidget {
 }
 
 class _TrendsPageState extends State<TrendsPage> {
+  Offset _cursorPosition = Offset.zero;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -20,41 +22,67 @@ class _TrendsPageState extends State<TrendsPage> {
         title: const Text('Trends'),
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
       ),
-      body: Consumer<TransactionProvider>(
-        builder: (context, provider, child) {
-          if (provider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: MouseRegion(
+        onHover: (event) {
+          setState(() {
+            _cursorPosition = event.localPosition;
+          });
+        },
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Consumer<TransactionProvider>(
+              builder: (context, provider, child) {
+                if (provider.isLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-          if (provider.transactions.isEmpty) {
-            return _buildEmptyState();
-          }
+                if (provider.transactions.isEmpty) {
+                  return _buildEmptyState();
+                }
 
-          return RefreshIndicator(
-            onRefresh: () async {
-              await provider.initialize();
-            },
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Date Range Selector
-                  const DateRangeSelector(),
-                  const SizedBox(height: 24),
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    await provider.initialize();
+                  },
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Date Range Selector
+                        const DateRangeSelector(),
+                        const SizedBox(height: 24),
 
-                  // Monthly Category Spending Chart
-                  const MonthlyCategoryChart(),
-                  const SizedBox(height: 24),
+                        // Monthly Category Spending Chart
+                        const MonthlyCategoryChart(),
+                        const SizedBox(height: 24),
 
-                  // Placeholder for future charts
-                  _buildFutureChartsPlaceholder(),
-                ],
+                        // Placeholder for future charts
+                        _buildFutureChartsPlaceholder(),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+            Positioned(
+              left: _cursorPosition.dx - 12,
+              top: _cursorPosition.dy - 12,
+              child: IgnorePointer(
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.red.withOpacity(0.5),
+                  ),
+                ),
               ),
             ),
-          );
-        },
+          ],
+        ),
       ),
     );
   }

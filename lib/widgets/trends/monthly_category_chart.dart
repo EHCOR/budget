@@ -202,24 +202,31 @@ class _MonthlyCategoryChartState extends State<MonthlyCategoryChart> {
           },
         ),
         touchCallback: (event, response) {
-          setState(() {
-            if (event is FlTapUpEvent && response?.spot != null) {
-              _handleStackTap(event, response!, data, categoryColors, provider);
-            }
+          if (event is FlTapUpEvent && response?.spot != null) {
+            _handleStackTap(event, response!, data, categoryColors, provider);
+            return; // don't process tap as hover
+          }
 
-            // Handle hover for individual stack pieces
+          if (event is FlPointerHoverEvent || event is FlPanUpdateEvent) {
             if (response?.spot != null) {
-              _touchedGroupIndex = response!.spot!.touchedBarGroupIndex;
-              _touchedRodIndex = response.spot!.touchedRodDataIndex;
-
-              // Calculate which category is being hovered based on touch response
+              if (_touchedGroupIndex != response!.spot!.touchedBarGroupIndex ||
+                  _touchedRodIndex != response.spot!.touchedRodDataIndex) {
+                setState(() {
+                  _touchedGroupIndex = response.spot!.touchedBarGroupIndex;
+                  _touchedRodIndex = response.spot!.touchedRodDataIndex;
+                });
+              }
               _updateHoveredCategoryFromTouch(response, data);
             } else {
-              _touchedGroupIndex = null;
-              _touchedRodIndex = null;
+              if (_touchedGroupIndex != null || _touchedRodIndex != null) {
+                setState(() {
+                  _touchedGroupIndex = null;
+                  _touchedRodIndex = null;
+                });
+              }
               _clearHoverWithDebounce();
             }
-          });
+          }
         },
       ),
       titlesData: FlTitlesData(
@@ -329,27 +336,20 @@ class _MonthlyCategoryChartState extends State<MonthlyCategoryChart> {
       // Check if this specific category is being hovered
       final isHovered = _hoveredCategory == categoryName;
 
-      // Adjust color based on income/expense, highlight state, and hover state
       Color color;
-      if (isHovered) {
-        // Brighten the hovered category
-        color = isIncome
-          ? baseColor.withOpacity(1.0)
-          : baseColor;
-      } else if (isHighlighted) {
-        color = isIncome
-          ? baseColor.withOpacity(1.0)
-          : baseColor.withOpacity(1.0);
-      } else if (_hoveredCategory != null) {
-        // Dim other categories when one is hovered
-        color = isIncome
-          ? baseColor.withOpacity(0.5)
-          : baseColor.withOpacity(0.6);
+      if (_hoveredCategory != null) {
+        if (isHovered && isHighlighted) {
+          // This is the hovered section
+          color = baseColor;
+        } else {
+          // This is not the hovered section, reduce its opacity
+          color = baseColor.withOpacity(0.3);
+        }
       } else {
-        // Normal state
+        // No hover, normal state
         color = isIncome
-          ? baseColor.withOpacity(0.8)
-          : baseColor.withOpacity(0.9);
+            ? baseColor.withOpacity(0.8)
+            : baseColor.withOpacity(0.9);
       }
 
       stackItems.add(BarChartRodStackItem(
@@ -485,24 +485,21 @@ class _MonthlyCategoryChartState extends State<MonthlyCategoryChart> {
     Map<String, double> monthData,
     Map<String, Map<String, Map<String, double>>> data,
   ) {
-    // Get sorted categories (same order as in our stack items)
-    final sortedCategories = monthData.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
+    final spot = response.spot;
+    if (spot == null) return null;
 
-    if (sortedCategories.isEmpty) return null;
+    final stackItemIndex = spot.touchedStackItemIndex;
 
-    // For now, implement a cycling approach based on repeated touches
-    // This provides a good user experience where users can click through categories
-    if (_hoveredCategory != null && monthData.containsKey(_hoveredCategory)) {
-      final currentIndex = sortedCategories.indexWhere((e) => e.key == _hoveredCategory);
-      if (currentIndex >= 0) {
-        final nextIndex = (currentIndex + 1) % sortedCategories.length;
-        return sortedCategories[nextIndex].key;
+    if (monthData.isNotEmpty && stackItemIndex != -1) {
+      final sortedCategories = monthData.entries.toList()
+        ..sort((a, b) => b.value.compareTo(a.value));
+
+      if (stackItemIndex >= 0 && stackItemIndex < sortedCategories.length) {
+        return sortedCategories[stackItemIndex].key;
       }
     }
 
-    // Return the largest category as default
-    return sortedCategories.first.key;
+    return null;
   }
 
   double _getMaxValue(Map<String, Map<String, Map<String, double>>> data) {
@@ -525,43 +522,50 @@ class _MonthlyCategoryChartState extends State<MonthlyCategoryChart> {
     BarTouchResponse response,
     Map<String, Map<String, Map<String, double>>> data,
   ) {
-    final spot = response.spot!;
+    final spot = response.spot;
+    if (spot == null) {
+      _clearHoverWithDebounce();
+      return;
+    }
+
     final groupIndex = spot.touchedBarGroupIndex;
     final rodIndex = spot.touchedRodDataIndex;
+    final stackItemIndex = spot.touchedStackItemIndex;
 
-    if (groupIndex >= 0 && groupIndex < data.length) {
+    String? newHoveredCategory;
+
+    if (groupIndex >= 0 && groupIndex < data.length && stackItemIndex != -1) {
       final months = data.keys.toList();
       final monthKey = months[groupIndex];
       final type = rodIndex == 0 ? 'income' : 'expense';
       final monthData = data[monthKey]![type]!;
 
       if (monthData.isNotEmpty) {
-        // Get the category that would be hovered
         final sortedCategories = monthData.entries.toList()
           ..sort((a, b) => b.value.compareTo(a.value));
 
-        final newHoveredCategory = sortedCategories.first.key;
-
-        // Only update if it's different from current
-        if (newHoveredCategory != _pendingHoveredCategory) {
-          _pendingHoveredCategory = newHoveredCategory;
-
-          // Cancel existing timer
-          _hoverDebounceTimer?.cancel();
-
-          // Set up new debounced timer
-          _hoverDebounceTimer = Timer(const Duration(milliseconds: 200), () {
-            if (mounted && _pendingHoveredCategory != null) {
-              setState(() {
-                _hoveredCategory = _pendingHoveredCategory;
-              });
-            }
-          });
+        if (stackItemIndex >= 0 && stackItemIndex < sortedCategories.length) {
+          newHoveredCategory = sortedCategories[stackItemIndex].key;
         }
       }
-    } else {
-      // Clear hover when not over any bar
-      _clearHoverWithDebounce();
+    }
+
+    if (newHoveredCategory != _pendingHoveredCategory) {
+      _pendingHoveredCategory = newHoveredCategory;
+
+      _hoverDebounceTimer?.cancel();
+
+      if (newHoveredCategory == null) {
+        _clearHoverWithDebounce();
+      } else {
+        _hoverDebounceTimer = Timer(const Duration(milliseconds: 50), () {
+          if (mounted) {
+            setState(() {
+              _hoveredCategory = _pendingHoveredCategory;
+            });
+          }
+        });
+      }
     }
   }
 
