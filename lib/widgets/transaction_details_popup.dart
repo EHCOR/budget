@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../models/transaction.dart';
 import '../models/category.dart';
 import '../providers/transaction_provider.dart';
+import '../providers/undo_redo_provider.dart';
 
 class TransactionDetailsPopup {
   static void show(BuildContext context, Transaction transaction) {
@@ -65,8 +66,11 @@ class TransactionDetailsPopup {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
-              provider.deleteTransaction(transaction.id);
+            onPressed: () async {
+              final undoRedoProvider = Provider.of<UndoRedoProvider>(context, listen: false);
+              final command = provider.createDeleteTransactionCommand(transaction.id);
+              await undoRedoProvider.executeCommand(command);
+
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Transaction deleted')),
@@ -107,7 +111,10 @@ class TransactionDetailsPopup {
       await _createTagAndCategorize(context, transaction, category, provider);
     } else {
       // Just update this single transaction
-      await provider.updateTransactionCategory(transaction.id, category.id);
+      final undoRedoProvider = Provider.of<UndoRedoProvider>(context, listen: false);
+      final command = provider.createUpdateTransactionCategoryCommand(transaction.id, category.id);
+      await undoRedoProvider.executeCommand(command);
+
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Category updated to ${category.name}')),
@@ -344,7 +351,10 @@ class _TransactionDetailsContentState extends State<_TransactionDetailsContent> 
                           widget.provider
                         );
                       } else {
-                        widget.provider.updateTransactionCategory(widget.transaction.id, category.id);
+                        final undoRedoProvider = Provider.of<UndoRedoProvider>(context, listen: false);
+                        final command = widget.provider.createUpdateTransactionCategoryCommand(widget.transaction.id, category.id);
+                        await undoRedoProvider.executeCommand(command);
+
                         Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('Category updated to ${category.name}')),

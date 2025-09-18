@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../providers/transaction_provider.dart';
+import '../providers/undo_redo_provider.dart';
 import '../models/transaction.dart';
 
 class AddTransactionDialog extends StatefulWidget {
@@ -170,7 +171,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       if (_formKey.currentState!.validate()) {
                         final amount = double.parse(_amountController.text);
                         final transaction = Transaction(
@@ -181,7 +182,10 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                           type: _selectedType,
                         );
 
-                        provider.addTransaction(transaction);
+                        final undoRedoProvider = Provider.of<UndoRedoProvider>(context, listen: false);
+                        final command = provider.createAddTransactionCommand(transaction);
+                        await undoRedoProvider.executeCommand(command);
+
                         Navigator.pop(context);
 
                         ScaffoldMessenger.of(context).showSnackBar(

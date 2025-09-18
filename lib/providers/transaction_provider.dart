@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/transaction.dart';
 import '../models/category.dart';
+import '../models/command.dart';
 import '../utils/storage_service.dart';
 
 class TransactionProvider extends ChangeNotifier {
@@ -511,6 +512,92 @@ class TransactionProvider extends ChangeNotifier {
     } catch (e) {
       print('Error importing data: $e');
       return false;
+    }
+  }
+
+  // Command-based transaction methods for undo/redo support
+
+  // Internal method to add transaction without command wrapper
+  Future<void> _addTransactionInternal(Map<String, dynamic> transactionData) async {
+    final transaction = Transaction.fromJson(transactionData);
+    _transactions.add(transaction);
+    await StorageService.saveTransactions(_transactions);
+    notifyListeners();
+  }
+
+  // Internal method to delete transaction without command wrapper
+  Future<void> _deleteTransactionInternal(String transactionId) async {
+    _transactions.removeWhere((t) => t.id == transactionId);
+    await StorageService.saveTransactions(_transactions);
+    notifyListeners();
+  }
+
+  // Internal method to update transaction without command wrapper
+  Future<void> _updateTransactionInternal(Map<String, dynamic> transactionData) async {
+    final transaction = Transaction.fromJson(transactionData);
+    final index = _transactions.indexWhere((t) => t.id == transaction.id);
+    if (index != -1) {
+      _transactions[index] = transaction;
+      await StorageService.saveTransactions(_transactions);
+      notifyListeners();
+    }
+  }
+
+  // Internal method to update transaction category without command wrapper
+  Future<void> _updateTransactionCategoryInternal(String transactionId, String categoryId) async {
+    final index = _transactions.indexWhere((t) => t.id == transactionId);
+    if (index != -1) {
+      _transactions[index].categoryId = categoryId;
+      await StorageService.saveTransactions(_transactions);
+      notifyListeners();
+    }
+  }
+
+  // Create commands for undo/redo operations
+  AddTransactionCommand createAddTransactionCommand(Transaction transaction) {
+    return AddTransactionCommand(
+      transactionId: transaction.id,
+      transactionData: transaction.toJson(),
+      deleteTransaction: _deleteTransactionInternal,
+      addTransaction: _addTransactionInternal,
+    );
+  }
+
+  DeleteTransactionCommand createDeleteTransactionCommand(String transactionId) {
+    final transaction = _transactions.firstWhere((t) => t.id == transactionId);
+    return DeleteTransactionCommand(
+      transactionId: transactionId,
+      transactionData: transaction.toJson(),
+      deleteTransaction: _deleteTransactionInternal,
+      addTransaction: _addTransactionInternal,
+    );
+  }
+
+  UpdateTransactionCommand createUpdateTransactionCommand(Transaction oldTransaction, Transaction newTransaction) {
+    return UpdateTransactionCommand(
+      transactionId: newTransaction.id,
+      oldData: oldTransaction.toJson(),
+      newData: newTransaction.toJson(),
+      updateTransaction: _updateTransactionInternal,
+    );
+  }
+
+  UpdateTransactionCategoryCommand createUpdateTransactionCategoryCommand(String transactionId, String newCategoryId) {
+    final transaction = _transactions.firstWhere((t) => t.id == transactionId);
+    return UpdateTransactionCategoryCommand(
+      transactionId: transactionId,
+      oldCategoryId: transaction.categoryId,
+      newCategoryId: newCategoryId,
+      updateTransactionCategory: _updateTransactionCategoryInternal,
+    );
+  }
+
+  // Get transaction by ID
+  Transaction? getTransactionById(String id) {
+    try {
+      return _transactions.firstWhere((t) => t.id == id);
+    } catch (e) {
+      return null;
     }
   }
 }

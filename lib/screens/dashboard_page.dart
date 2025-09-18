@@ -7,6 +7,7 @@ import '../providers/transaction_provider.dart';
 import '../models/transaction.dart';
 import '../widgets/date_range_selector.dart';
 import '../widgets/transaction_details_popup.dart';
+import '../widgets/undo_redo_controls.dart';
 import 'settings_page.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -35,6 +36,7 @@ class _DashboardPageState extends State<DashboardPage> {
         title: const Text('Dashboard'),
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
         actions: [
+          const UndoRedoControls(),
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {

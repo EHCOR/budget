@@ -2,12 +2,21 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/transaction_provider.dart';
+import 'providers/undo_redo_provider.dart';
+import 'utils/keyboard_handler.dart';
 import 'screens/home_page.dart';
 
 void main() {
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => TransactionProvider()..initialize(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (context) => TransactionProvider()..initialize(),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => UndoRedoProvider(),
+        ),
+      ],
       child: const MyApp(),
     ),
   );
@@ -38,7 +47,9 @@ class MyApp extends StatelessWidget {
             useMaterial3: true,
           ),
           themeMode: provider.themeMode,
-          home: const HomePage(),
+          home: const KeyboardHandler(
+            child: HomePage(),
+          ),
         );
       },
     );
