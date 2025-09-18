@@ -27,15 +27,15 @@ class _HomePageState extends State<HomePage> {
   final List<Widget> _pages = [
     const DashboardPage(),
     const TransactionsPage(),
-    const TrendsPage(),
     const CategoriesPage(),
+    const TrendsPage(),
   ];
 
   final List<String> _titles = [
     'Dashboard',
     'Transactions',
-    'Trends',
     'Categories',
+    'Trends',
   ];
 
   @override
@@ -65,14 +65,14 @@ class _HomePageState extends State<HomePage> {
             label: 'Transactions',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.trending_up_outlined),
-            activeIcon: Icon(Icons.trending_up),
-            label: 'Trends',
-          ),
-          BottomNavigationBarItem(
             icon: Icon(Icons.category_outlined),
             activeIcon: Icon(Icons.category),
             label: 'Categories',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.trending_up_outlined),
+            activeIcon: Icon(Icons.trending_up),
+            label: 'Trends',
           ),
         ],
       ),
@@ -89,7 +89,7 @@ class _HomePageState extends State<HomePage> {
         tooltip: 'Add Transaction',
         child: const Icon(Icons.add),
       );
-    } else if (_selectedIndex == 3) { // Categories page
+    } else if (_selectedIndex == 2) { // Categories page
       return FloatingActionButton(
         onPressed: _showAddCategoryDialog,
         tooltip: 'Add Category',
@@ -182,9 +182,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _showAddCategoryDialog() {
-    // Get the categories page and call its add category dialog
-    final categoriesPage = _pages[3] as CategoriesPage;
-    categoriesPage.showAddCategoryDialog(context);
+    // Call the static method to show the add category dialog
+    CategoriesPage.showAddCategoryDialog(context);
   }
 
   Future<void> _importCSV() async {

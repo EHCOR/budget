@@ -5,8 +5,26 @@ import '../providers/transaction_provider.dart';
 import '../models/category.dart';
 import 'settings_page.dart';
 
-class CategoriesPage extends StatelessWidget {
+class CategoriesPage extends StatefulWidget {
   const CategoriesPage({super.key});
+
+  @override
+  State<CategoriesPage> createState() => _CategoriesPageState();
+
+  static void showAddCategoryDialog(BuildContext context) {
+    _CategoriesPageState._showAddCategoryDialogStatic(context);
+  }
+}
+
+class _CategoriesPageState extends State<CategoriesPage> {
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   // Get all available icons for categories with their names
   static Map<String, IconData> get availableIconsMap => {
@@ -150,8 +168,26 @@ class CategoriesPage extends StatelessWidget {
 
   static List<IconData> get availableIcons => availableIconsMap.values.toList();
 
+  List<Category> _filterCategories(List<Category> categories) {
+    if (_searchQuery.isEmpty) {
+      return categories;
+    }
+
+    return categories.where((category) {
+      final name = category.name.toLowerCase();
+      final keywords = category.keywords.join(' ').toLowerCase();
+      final query = _searchQuery.toLowerCase();
+
+      return name.contains(query) || keywords.contains(query);
+    }).toList();
+  }
+
   // Get dialog width based on screen size breakpoints
   double _getDialogWidth(double screenWidth) {
+    return _getDialogWidthStatic(screenWidth);
+  }
+
+  static double _getDialogWidthStatic(double screenWidth) {
     if (screenWidth < 600) {
       // xs - Small screens (phones)
       return screenWidth * 0.9;
@@ -178,6 +214,17 @@ class CategoriesPage extends StatelessWidget {
     );
   }
 
+  static Widget _buildIconPickerStatic(Color selectedColor, IconData selectedIcon, Function(IconData) onIconSelected) {
+    return SizedBox(
+      height: 240,
+      child: _IconPickerWidget(
+        selectedColor: selectedColor,
+        selectedIcon: selectedIcon,
+        onIconSelected: onIconSelected,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -188,7 +235,7 @@ class CategoriesPage extends StatelessWidget {
             const SizedBox(width: 8),
             IconButton(
               icon: const Icon(Icons.add),
-              onPressed: () => showAddCategoryDialog(context),
+              onPressed: () => _showAddCategoryDialog(context),
               tooltip: 'Add Category',
             ),
           ],
@@ -209,52 +256,125 @@ class CategoriesPage extends StatelessWidget {
       ),
       body: Consumer<TransactionProvider>(
         builder: (context, provider, child) {
-          final categories = provider.categories.where((c) => c.id != 'uncategorized').toList();
+          final allCategories = provider.categories.where((c) => c.id != 'uncategorized').toList();
+          final filteredCategories = _filterCategories(allCategories);
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: categories.length,
-            itemBuilder: (context, index) {
-              final category = categories[index];
-              final transactionCount = provider.getTransactionsByCategory(category.id).length;
-              final total = provider.getTransactionsByCategory(category.id)
-                  .fold(0.0, (sum, t) => sum + t.amount.abs());
-
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: category.color.withOpacity(0.2),
-                    child: Icon(category.icon, color: category.color),
+          return Column(
+            children: [
+              // Search bar
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Search categories...',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() => _searchQuery = '');
+                            },
+                          )
+                        : null,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    filled: true,
+                    fillColor: Theme.of(context).colorScheme.surface,
                   ),
-                  title: Text(
-                    category.name,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Text('$transactionCount transactions • ${provider.currencySymbol}${total.toStringAsFixed(2)}'),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit),
-                        onPressed: () => _showEditCategoryDialog(context, category),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete),
-                        onPressed: () => _confirmDelete(context, provider, category),
-                      ),
-                    ],
-                  ),
+                  onChanged: (value) {
+                    setState(() => _searchQuery = value);
+                  },
                 ),
-              );
-            },
+              ),
+              // Categories list
+              Expanded(
+                child: filteredCategories.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              _searchQuery.isEmpty ? Icons.category_outlined : Icons.search_off,
+                              size: 64,
+                              color: Colors.grey.shade400,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              _searchQuery.isEmpty
+                                  ? 'No categories yet'
+                                  : 'No categories found for "$_searchQuery"',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                            if (_searchQuery.isEmpty) ...[
+                              const SizedBox(height: 8),
+                              Text(
+                                'Tap the + button to add your first category',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey.shade500,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: filteredCategories.length,
+                        itemBuilder: (context, index) {
+                          final category = filteredCategories[index];
+                          final transactionCount = provider.getTransactionsByCategory(category.id).length;
+                          final total = provider.getTransactionsByCategory(category.id)
+                              .fold(0.0, (sum, t) => sum + t.amount.abs());
+
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            child: ListTile(
+                              leading: CircleAvatar(
+                                backgroundColor: category.color.withOpacity(0.2),
+                                child: Icon(category.icon, color: category.color),
+                              ),
+                              title: Text(
+                                category.name,
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              subtitle: Text('$transactionCount transactions • ${provider.currencySymbol}${total.toStringAsFixed(2)}'),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.edit),
+                                    onPressed: () => _showEditCategoryDialog(context, category),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete),
+                                    onPressed: () => _confirmDelete(context, provider, category),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
           );
         },
       ),
     );
   }
 
-  void showAddCategoryDialog(BuildContext context) {
+  void _showAddCategoryDialog(BuildContext context) {
+    CategoriesPage.showAddCategoryDialog(context);
+  }
+
+  static void _showAddCategoryDialogStatic(BuildContext context) {
     final nameController = TextEditingController();
     final keywordsController = TextEditingController();
     Color selectedColor = Colors.blue;
@@ -265,7 +385,7 @@ class CategoriesPage extends StatelessWidget {
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
           final screenWidth = MediaQuery.of(context).size.width;
-          final dialogWidth = _getDialogWidth(screenWidth);
+          final dialogWidth = _getDialogWidthStatic(screenWidth);
 
           return AlertDialog(
             title: const Text('Add Category'),
@@ -328,7 +448,7 @@ class CategoriesPage extends StatelessWidget {
                     const SizedBox(height: 16),
 
                     // Icon picker
-                    _buildIconPicker(selectedColor, selectedIcon, (icon) {
+                    _buildIconPickerStatic(selectedColor, selectedIcon, (icon) {
                       setState(() => selectedIcon = icon);
                     }),
                     const SizedBox(height: 8),
@@ -616,10 +736,10 @@ class _IconPickerWidgetState extends State<_IconPickerWidget> {
 
   List<MapEntry<String, IconData>> get _filteredIcons {
     if (_searchQuery.isEmpty) {
-      return CategoriesPage.availableIconsMap.entries.toList();
+      return _CategoriesPageState.availableIconsMap.entries.toList();
     }
 
-    return CategoriesPage.availableIconsMap.entries
+    return _CategoriesPageState.availableIconsMap.entries
         .where((entry) => entry.key.toLowerCase().contains(_searchQuery.toLowerCase()))
         .toList();
   }
