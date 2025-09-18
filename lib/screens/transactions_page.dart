@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../providers/transaction_provider.dart';
 import '../models/transaction.dart';
+import '../models/category.dart';
 import '../widgets/date_range_selector.dart';
 import '../widgets/transaction_details_popup.dart';
 import '../widgets/undo_redo_controls.dart';
@@ -377,105 +378,167 @@ class _TransactionsPageState extends State<TransactionsPage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
+      isScrollControlled: true,
       builder: (context) {
         return Consumer<TransactionProvider>(
           builder: (context, provider, child) {
             return StatefulBuilder(
               builder: (context, setModalState) {
-                return Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Filter Transactions',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 20),
+                return Container(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.8,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Filter Transactions',
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 20),
 
-                      // Type filter
-                      const Text('Transaction Type', style: TextStyle(fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: FilterChip(
-                              label: const Text('Income'),
-                              selected: _selectedType == TransactionType.income,
-                              onSelected: (selected) {
-                                setModalState(() {
-                                  _selectedType = selected ? TransactionType.income : null;
-                                });
-                              },
+                        // Type filter card
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Transaction Type',
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                ),
+                                const SizedBox(height: 12),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildFilterOption(
+                                        context,
+                                        'Income',
+                                        Icons.trending_up,
+                                        Colors.green,
+                                        _selectedType == TransactionType.income,
+                                        () {
+                                          setModalState(() {
+                                            _selectedType = _selectedType == TransactionType.income
+                                                ? null
+                                                : TransactionType.income;
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _buildFilterOption(
+                                        context,
+                                        'Expenses',
+                                        Icons.trending_down,
+                                        Colors.red,
+                                        _selectedType == TransactionType.expense,
+                                        () {
+                                          setModalState(() {
+                                            _selectedType = _selectedType == TransactionType.expense
+                                                ? null
+                                                : TransactionType.expense;
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: FilterChip(
-                              label: const Text('Expenses'),
-                              selected: _selectedType == TransactionType.expense,
-                              onSelected: (selected) {
-                                setModalState(() {
-                                  _selectedType = selected ? TransactionType.expense : null;
-                                });
-                              },
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // Category filter card
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Category',
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                ),
+                                const SizedBox(height: 12),
+                                ConstrainedBox(
+                                  constraints: const BoxConstraints(maxHeight: 200),
+                                  child: SingleChildScrollView(
+                                    child: Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: provider.categories.map((category) {
+                                        return _buildCategoryFilterOption(
+                                          context,
+                                          category,
+                                          _selectedCategoryId == category.id,
+                                          () {
+                                            setModalState(() {
+                                              _selectedCategoryId = _selectedCategoryId == category.id
+                                                  ? null
+                                                  : category.id;
+                                            });
+                                          },
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
+                        ),
 
-                      const SizedBox(height: 16),
+                        const SizedBox(height: 20),
 
-                      // Category filter
-                      const Text('Category', style: TextStyle(fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: provider.categories.map((category) {
-                          return FilterChip(
-                            label: Text(category.name),
-                            selected: _selectedCategoryId == category.id,
-                            onSelected: (selected) {
-                              setModalState(() {
-                                _selectedCategoryId = selected ? category.id : null;
-                              });
-                            },
-                          );
-                        }).toList(),
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // Actions
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () {
-                                setState(() {
-                                  _selectedType = null;
-                                  _selectedCategoryId = null;
-                                });
-                                Navigator.pop(context);
-                              },
-                              child: const Text('Clear'),
+                        // Actions
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _selectedType = null;
+                                    _selectedCategoryId = null;
+                                  });
+                                  Navigator.pop(context);
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: const Text('Clear All'),
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: () {
-                                setState(() {});
-                                Navigator.pop(context);
-                              },
-                              child: const Text('Apply'),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  setState(() {});
+                                  Navigator.pop(context);
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: const Text('Apply Filters'),
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },
@@ -483,6 +546,105 @@ class _TransactionsPageState extends State<TransactionsPage> {
           },
         );
       },
+    );
+  }
+
+  Widget _buildFilterOption(
+    BuildContext context,
+    String label,
+    IconData icon,
+    Color color,
+    bool isSelected,
+    VoidCallback onTap,
+  ) {
+    return Material(
+      color: isSelected
+          ? color.withOpacity(0.15)
+          : Theme.of(context).colorScheme.surface,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected
+                  ? color
+                  : Theme.of(context).colorScheme.outline.withOpacity(0.3),
+              width: isSelected ? 2 : 1,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                color: isSelected ? color : Theme.of(context).colorScheme.onSurface,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  color: isSelected ? color : Theme.of(context).colorScheme.onSurface,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategoryFilterOption(
+    BuildContext context,
+    Category category,
+    bool isSelected,
+    VoidCallback onTap,
+  ) {
+    return Material(
+      color: isSelected
+          ? category.color.withOpacity(0.15)
+          : Theme.of(context).colorScheme.surface,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isSelected
+                  ? category.color
+                  : Theme.of(context).colorScheme.outline.withOpacity(0.3),
+              width: isSelected ? 2 : 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                category.icon,
+                color: isSelected ? category.color : Theme.of(context).colorScheme.onSurface,
+                size: 16,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                category.name,
+                style: TextStyle(
+                  color: isSelected ? category.color : Theme.of(context).colorScheme.onSurface,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
