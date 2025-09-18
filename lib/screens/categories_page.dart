@@ -188,7 +188,7 @@ class CategoriesPage extends StatelessWidget {
             const SizedBox(width: 8),
             IconButton(
               icon: const Icon(Icons.add),
-              onPressed: () => _showAddCategoryDialog(context),
+              onPressed: () => showAddCategoryDialog(context),
               tooltip: 'Add Category',
             ),
           ],
@@ -254,7 +254,7 @@ class CategoriesPage extends StatelessWidget {
     );
   }
 
-  void _showAddCategoryDialog(BuildContext context) {
+  void showAddCategoryDialog(BuildContext context) {
     final nameController = TextEditingController();
     final keywordsController = TextEditingController();
     Color selectedColor = Colors.blue;

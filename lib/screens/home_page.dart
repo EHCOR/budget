@@ -82,11 +82,17 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget? _buildFAB() {
-    // Show FAB only on dashboard and transactions pages
+    // Show FAB on dashboard, transactions, and categories pages
     if (_selectedIndex == 0 || _selectedIndex == 1) {
       return FloatingActionButton(
         onPressed: _showAddOptions,
         tooltip: 'Add Transaction',
+        child: const Icon(Icons.add),
+      );
+    } else if (_selectedIndex == 3) { // Categories page
+      return FloatingActionButton(
+        onPressed: _showAddCategoryDialog,
+        tooltip: 'Add Category',
         child: const Icon(Icons.add),
       );
     }
@@ -173,6 +179,12 @@ class _HomePageState extends State<HomePage> {
       context: context,
       builder: (context) => const AddTransactionDialog(),
     );
+  }
+
+  void _showAddCategoryDialog() {
+    // Get the categories page and call its add category dialog
+    final categoriesPage = _pages[3] as CategoriesPage;
+    categoriesPage.showAddCategoryDialog(context);
   }
 
   Future<void> _importCSV() async {

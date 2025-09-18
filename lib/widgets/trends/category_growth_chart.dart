@@ -276,10 +276,12 @@ class _CategoryGrowthChartState extends State<CategoryGrowthChart> {
       borderData: FlBorderData(show: false),
       gridData: FlGridData(
         show: true,
-        horizontalInterval: _showPercentage ? 20 : maxValue / 5,
+        horizontalInterval: _showPercentage
+            ? _calculatePercentageInterval(maxValue, minValue)
+            : maxValue / 5,
         getDrawingHorizontalLine: (value) {
           return FlLine(
-            color: Colors.grey.shade300,
+            color: Theme.of(context).dividerColor,
             strokeWidth: 1,
           );
         },
@@ -452,5 +454,24 @@ class _CategoryGrowthChartState extends State<CategoryGrowthChart> {
         ],
       ),
     );
+  }
+
+  // Calculate appropriate interval for percentage view to avoid too dense grid lines
+  double _calculatePercentageInterval(double maxValue, double minValue) {
+    final range = maxValue - minValue;
+
+    if (range <= 10) {
+      return 2; // 2% intervals for small ranges (-5% to 5%)
+    } else if (range <= 20) {
+      return 5; // 5% intervals for small-medium ranges (-10% to 10%)
+    } else if (range <= 50) {
+      return 10; // 10% intervals for medium ranges (-25% to 25%)
+    } else if (range <= 100) {
+      return 20; // 20% intervals for large ranges (-50% to 50%)
+    } else if (range <= 200) {
+      return 25; // 25% intervals for very large ranges (-100% to 100%)
+    } else {
+      return 50; // 50% intervals for extreme ranges
+    }
   }
 }
