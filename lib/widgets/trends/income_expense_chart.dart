@@ -14,7 +14,7 @@ class IncomeExpenseChart extends StatelessWidget {
       builder: (context, provider, child) {
         final data = provider.getMonthlyCategoryData();
 
-        if (data.isEmpty) {
+        if (data.isEmpty || data.length < 2) {
           return _buildEmptyChart();
         }
 

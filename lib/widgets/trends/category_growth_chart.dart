@@ -24,7 +24,7 @@ class _CategoryGrowthChartState extends State<CategoryGrowthChart> {
         final data = provider.getMonthlyCategoryData();
         final categoryColors = provider.getCategoryColorsMap();
 
-        if (data.isEmpty) {
+        if (data.isEmpty || data.length < 2) {
           return _buildEmptyChart();
         }
 

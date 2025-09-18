@@ -17,6 +17,8 @@ class TrendsPage extends StatefulWidget {
 }
 
 class _TrendsPageState extends State<TrendsPage> {
+  bool _hideIncomes = false;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -58,10 +60,35 @@ class _TrendsPageState extends State<TrendsPage> {
                 children: [
                   // Date Range Selector
                   const DateRangeSelector(showTrendsOptions: true),
+                  const SizedBox(height: 16),
+
+                  // Hide Incomes Toggle
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Hide Income Transactions',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                          ),
+                          Switch(
+                            value: _hideIncomes,
+                            onChanged: (value) {
+                              setState(() {
+                                _hideIncomes = value;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 24),
 
                   // Monthly Category Spending Chart
-                  const MonthlyCategoryChart(),
+                  MonthlyCategoryChart(hideIncomes: _hideIncomes),
                   const SizedBox(height: 24),
 
                   // Spending vs Income Over Time
@@ -73,7 +100,7 @@ class _TrendsPageState extends State<TrendsPage> {
                   const SizedBox(height: 24),
 
                   // Budget vs Actual Analysis
-                  const BudgetAnalysisChart(),
+                  BudgetAnalysisChart(hideIncomes: _hideIncomes),
                 ],
               ),
             ),

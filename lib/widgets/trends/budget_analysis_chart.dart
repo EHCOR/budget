@@ -7,7 +7,9 @@ import '../../providers/transaction_provider.dart';
 import '../../utils/statistics_service.dart';
 
 class BudgetAnalysisChart extends StatefulWidget {
-  const BudgetAnalysisChart({super.key});
+  final bool hideIncomes;
+
+  const BudgetAnalysisChart({super.key, this.hideIncomes = false});
 
   @override
   State<BudgetAnalysisChart> createState() => _BudgetAnalysisChartState();
@@ -16,11 +18,34 @@ class BudgetAnalysisChart extends StatefulWidget {
 class _BudgetAnalysisChartState extends State<BudgetAnalysisChart> {
   String _selectedBudgetType = 'historical'; // 'historical', 'conservative', 'target'
 
+  Map<String, Map<String, Map<String, double>>> _filterDataForIncomes(
+      Map<String, Map<String, Map<String, double>>> rawData) {
+    if (!widget.hideIncomes) {
+      return rawData;
+    }
+
+    // Filter out income transactions when hideIncomes is true
+    final filteredData = <String, Map<String, Map<String, double>>>{};
+
+    for (final entry in rawData.entries) {
+      final month = entry.key;
+      final monthData = entry.value;
+
+      filteredData[month] = {
+        'income': <String, double>{}, // Empty income map when hiding incomes
+        'expense': Map<String, double>.from(monthData['expense'] ?? {}),
+      };
+    }
+
+    return filteredData;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<TransactionProvider>(
       builder: (context, provider, child) {
-        final data = provider.getMonthlyCategoryData();
+        final rawData = provider.getMonthlyCategoryData();
+        final data = _filterDataForIncomes(rawData);
 
         if (data.isEmpty || data.length < 2) {
           return _buildEmptyChart();
@@ -39,13 +64,13 @@ class _BudgetAnalysisChartState extends State<BudgetAnalysisChart> {
                 SizedBox(
                   height: 300,
                   child: BarChart(
-                    _buildBarChartData(data, provider),
+                    _buildBarChartData(data, rawData, provider),
                   ),
                 ),
                 const SizedBox(height: 16),
                 _buildLegend(),
                 const SizedBox(height: 12),
-                _buildBudgetSummary(data, provider.currencySymbol),
+                _buildBudgetSummary(data, rawData, provider.currencySymbol),
               ],
             ),
           ),
@@ -160,10 +185,11 @@ class _BudgetAnalysisChartState extends State<BudgetAnalysisChart> {
 
   BarChartData _buildBarChartData(
     Map<String, Map<String, Map<String, double>>> data,
+    Map<String, Map<String, Map<String, double>>> rawData,
     TransactionProvider provider,
   ) {
     final months = data.keys.toList();
-    final topCategories = _getTopExpenseCategories(data, 6);
+    final topCategories = _getTopExpenseCategories(data, rawData, 6);
 
     // Calculate budget baselines for each category
     final budgetBaselines = <String, double>{};
@@ -326,6 +352,7 @@ class _BudgetAnalysisChartState extends State<BudgetAnalysisChart> {
 
   List<String> _getTopExpenseCategories(
     Map<String, Map<String, Map<String, double>>> data,
+    Map<String, Map<String, Map<String, double>>> rawData,
     int count,
   ) {
     final categoryTotals = <String, double>{};
@@ -334,6 +361,23 @@ class _BudgetAnalysisChartState extends State<BudgetAnalysisChart> {
       final expenseData = monthData['expense']!;
       for (final entry in expenseData.entries) {
         categoryTotals[entry.key] = (categoryTotals[entry.key] ?? 0.0) + entry.value;
+      }
+    }
+
+    // Filter out categories that have income transactions when hideIncomes is true
+    if (widget.hideIncomes) {
+      final categoriesToRemove = <String>[];
+      for (final monthData in rawData.values) {
+        final incomeData = monthData['income']!;
+        for (final category in incomeData.keys) {
+          if (!categoriesToRemove.contains(category)) {
+            categoriesToRemove.add(category);
+          }
+        }
+      }
+
+      for (final category in categoriesToRemove) {
+        categoryTotals.remove(category);
       }
     }
 
@@ -388,6 +432,7 @@ class _BudgetAnalysisChartState extends State<BudgetAnalysisChart> {
 
   Widget _buildBudgetSummary(
     Map<String, Map<String, Map<String, double>>> data,
+    Map<String, Map<String, Map<String, double>>> rawData,
     String currencySymbol,
   ) {
     final latestMonth = data.values.last;
@@ -395,7 +440,7 @@ class _BudgetAnalysisChartState extends State<BudgetAnalysisChart> {
 
     // Calculate total budget for latest month
     double totalBudget = 0.0;
-    final topCategories = _getTopExpenseCategories(data, 6);
+    final topCategories = _getTopExpenseCategories(data, rawData, 6);
 
     for (final category in topCategories) {
       final categoryValues = <double>[];

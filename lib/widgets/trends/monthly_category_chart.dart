@@ -9,7 +9,9 @@ import '../../utils/statistics_service.dart';
 import 'category_info_popup.dart';
 
 class MonthlyCategoryChart extends StatefulWidget {
-  const MonthlyCategoryChart({super.key});
+  final bool hideIncomes;
+
+  const MonthlyCategoryChart({super.key, this.hideIncomes = false});
 
   @override
   State<MonthlyCategoryChart> createState() => _MonthlyCategoryChartState();
@@ -28,15 +30,41 @@ class _MonthlyCategoryChartState extends State<MonthlyCategoryChart> {
     super.dispose();
   }
 
+  Map<String, Map<String, Map<String, double>>> _filterDataForIncomes(
+      Map<String, Map<String, Map<String, double>>> rawData) {
+    if (!widget.hideIncomes) {
+      return rawData;
+    }
+
+    // Filter out income transactions when hideIncomes is true
+    final filteredData = <String, Map<String, Map<String, double>>>{};
+
+    for (final entry in rawData.entries) {
+      final month = entry.key;
+      final monthData = entry.value;
+
+      filteredData[month] = {
+        'income': <String, double>{}, // Empty income map when hiding incomes
+        'expense': Map<String, double>.from(monthData['expense'] ?? {}),
+      };
+    }
+
+    return filteredData;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<TransactionProvider>(
       builder: (context, provider, child) {
-        final data = provider.getMonthlyCategoryData();
+        final rawData = provider.getMonthlyCategoryData();
         final categoryColors = provider.getCategoryColorsMap();
 
+        // Filter data based on hideIncomes setting
+        final data = _filterDataForIncomes(rawData);
+
         if (data.isEmpty || data.values.every((month) =>
-          month['income']!.isEmpty && month['expense']!.isEmpty)) {
+          (widget.hideIncomes ? month['expense']!.isEmpty :
+           (month['income']!.isEmpty && month['expense']!.isEmpty)))) {
           return _buildEmptyChart();
         }
 
