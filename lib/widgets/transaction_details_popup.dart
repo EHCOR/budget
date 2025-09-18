@@ -20,70 +20,16 @@ class TransactionDetailsPopup {
             final category = provider.getCategoryById(transaction.categoryId);
 
             return DraggableScrollableSheet(
-              initialChildSize: 0.5,
-              minChildSize: 0.3,
-              maxChildSize: 0.8,
+              initialChildSize: 0.7,
+              minChildSize: 0.5,
+              maxChildSize: 0.9,
               expand: false,
               builder: (context, scrollController) {
-                return Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Center(
-                        child: Container(
-                          width: 40,
-                          height: 5,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade300,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Transaction details
-                      Text(
-                        transaction.description,
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 20),
-
-                      _buildDetailRow('Date', DateFormat.yMMMMd().format(transaction.date)),
-                      _buildDetailRow('Amount', NumberFormat.currency(symbol: provider.currencySymbol).format(transaction.amount)),
-                      _buildDetailRow('Type', transaction.type == TransactionType.income ? 'Income' : 'Expense'),
-                      _buildDetailRow('Category', category?.name ?? 'Uncategorized'),
-
-                      const SizedBox(height: 20),
-
-                      // Actions
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              icon: const Icon(Icons.category),
-                              label: const Text('Change Category'),
-                              onPressed: () {
-                                Navigator.pop(context);
-                                _showCategoryPicker(context, transaction, provider);
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              label: const Text('Delete', style: TextStyle(color: Colors.red)),
-                              onPressed: () {
-                                Navigator.pop(context);
-                                _confirmDelete(context, transaction, provider);
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                return _TransactionDetailsContent(
+                  transaction: transaction,
+                  category: category,
+                  provider: provider,
+                  scrollController: scrollController,
                 );
               },
             );
@@ -106,47 +52,6 @@ class TransactionDetailsPopup {
     );
   }
 
-  static void _showCategoryPicker(BuildContext context, Transaction transaction, TransactionProvider provider) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Select Category'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: provider.categories.length,
-            itemBuilder: (context, index) {
-              final category = provider.categories[index];
-              final isSelected = category.id == transaction.categoryId;
-
-              return ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: category.color.withOpacity(0.2),
-                  child: Icon(category.icon, color: category.color, size: 20),
-                ),
-                title: Text(category.name),
-                trailing: isSelected ? const Icon(Icons.check, color: Colors.green) : null,
-                onTap: () async {
-                  // Check if this transaction is currently uncategorized
-                  if (transaction.categoryId == 'uncategorized') {
-                    Navigator.pop(context);
-                    await _handleUncategorizedSelection(context, transaction, category, provider);
-                  } else {
-                    provider.updateTransactionCategory(transaction.id, category.id);
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Category updated to ${category.name}')),
-                    );
-                  }
-                },
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
 
   static void _confirmDelete(BuildContext context, Transaction transaction, TransactionProvider provider) {
     showDialog(
@@ -281,5 +186,197 @@ class TransactionDetailsPopup {
         );
       }
     }
+  }
+}
+
+class _TransactionDetailsContent extends StatefulWidget {
+  final Transaction transaction;
+  final Category? category;
+  final TransactionProvider provider;
+  final ScrollController scrollController;
+
+  const _TransactionDetailsContent({
+    required this.transaction,
+    required this.category,
+    required this.provider,
+    required this.scrollController,
+  });
+
+  @override
+  State<_TransactionDetailsContent> createState() => _TransactionDetailsContentState();
+}
+
+class _TransactionDetailsContentState extends State<_TransactionDetailsContent> {
+  final TextEditingController _searchController = TextEditingController();
+  List<Category> _filteredCategories = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _filteredCategories = widget.provider.categories;
+    _searchController.addListener(_filterCategories);
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_filterCategories);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _filterCategories() {
+    final query = _searchController.text.toLowerCase();
+    setState(() {
+      _filteredCategories = widget.provider.categories.where((category) {
+        return category.name.toLowerCase().contains(query);
+      }).toList();
+    });
+  }
+
+  List<Category> _getSortedCategories() {
+    final categories = List<Category>.from(_filteredCategories);
+
+    // Find uncategorized category and move it to the top
+    final uncategorizedIndex = categories.indexWhere((cat) => cat.id == 'uncategorized');
+    if (uncategorizedIndex != -1) {
+      final uncategorized = categories.removeAt(uncategorizedIndex);
+      categories.insert(0, uncategorized);
+    }
+
+    return categories;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 5,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Transaction details
+          Text(
+            widget.transaction.description,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 20),
+
+          TransactionDetailsPopup._buildDetailRow('Date', DateFormat.yMMMMd().format(widget.transaction.date)),
+          TransactionDetailsPopup._buildDetailRow('Amount', NumberFormat.currency(symbol: widget.provider.currencySymbol).format(widget.transaction.amount)),
+          TransactionDetailsPopup._buildDetailRow('Type', widget.transaction.type == TransactionType.income ? 'Income' : 'Expense'),
+          TransactionDetailsPopup._buildDetailRow('Category', widget.category?.name ?? 'Uncategorized'),
+
+          const SizedBox(height: 20),
+
+          // Category selection section
+          Text(
+            'Change Category',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey.shade700,
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // Search field
+          TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: 'Search categories...',
+              hintStyle: const TextStyle(fontSize: 14),
+              prefixIcon: const Icon(Icons.search, size: 20),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              isDense: true,
+            ),
+            style: const TextStyle(fontSize: 14),
+          ),
+          const SizedBox(height: 16),
+
+          // Categories list
+          Expanded(
+            child: ListView.builder(
+              controller: widget.scrollController,
+              itemCount: _getSortedCategories().length,
+              itemBuilder: (context, index) {
+                final category = _getSortedCategories()[index];
+                final isSelected = category.id == widget.transaction.categoryId;
+
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  elevation: isSelected ? 2 : 0,
+                  color: isSelected ? category.color.withOpacity(0.1) : null,
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: category.color.withOpacity(0.2),
+                      child: Icon(category.icon, color: category.color, size: 20),
+                    ),
+                    title: Text(
+                      category.name,
+                      style: TextStyle(
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                    ),
+                    trailing: isSelected
+                      ? Icon(Icons.check_circle, color: category.color)
+                      : null,
+                    onTap: () async {
+                      if (widget.transaction.categoryId == 'uncategorized') {
+                        Navigator.pop(context);
+                        await TransactionDetailsPopup._handleUncategorizedSelection(
+                          context,
+                          widget.transaction,
+                          category,
+                          widget.provider
+                        );
+                      } else {
+                        widget.provider.updateTransactionCategory(widget.transaction.id, category.id);
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Category updated to ${category.name}')),
+                        );
+                      }
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Delete button
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.delete, color: Colors.red),
+              label: const Text('Delete Transaction', style: TextStyle(color: Colors.red)),
+              onPressed: () {
+                Navigator.pop(context);
+                TransactionDetailsPopup._confirmDelete(context, widget.transaction, widget.provider);
+              },
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Colors.red),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
