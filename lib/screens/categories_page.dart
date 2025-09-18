@@ -2,82 +2,224 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/transaction_provider.dart';
-import '../widgets/nav_bar.dart';
-import 'transactions_page.dart';
-import '../models/category_summary.dart';
+import '../models/category.dart';
+import 'settings_page.dart';
 
-class CategoriesPage extends StatefulWidget {
-  final bool showDrawer;
-  
-  const CategoriesPage({super.key, this.showDrawer = true});
+class CategoriesPage extends StatelessWidget {
+  const CategoriesPage({super.key});
 
-  @override
-  _CategoriesPageState createState() => _CategoriesPageState();
-}
+  // Get all available icons for categories with their names
+  static Map<String, IconData> get availableIconsMap => {
+    // Food & Dining
+    'restaurant': Icons.restaurant,
+    'cafe': Icons.local_cafe,
+    'bar': Icons.local_bar,
+    'pizza': Icons.local_pizza,
+    'fastfood': Icons.fastfood,
+    'bakery': Icons.bakery_dining,
+    'lunch': Icons.lunch_dining,
+    'dinner': Icons.dinner_dining,
+    'breakfast': Icons.breakfast_dining,
+    'wine': Icons.wine_bar,
+    'grocery': Icons.local_grocery_store,
 
-class _CategoriesPageState extends State<CategoriesPage> {
+    // Shopping
+    'shopping cart': Icons.shopping_cart,
+    'shopping bag': Icons.shopping_bag,
+    'store': Icons.store,
+    'mall': Icons.local_mall,
+    'storefront': Icons.storefront,
+    'shipping': Icons.local_shipping,
+    'basket': Icons.shopping_basket,
+
+    // Transportation
+    'car': Icons.directions_car,
+    'gas station': Icons.local_gas_station,
+    'bus': Icons.directions_bus,
+    'train': Icons.train,
+    'flight': Icons.flight,
+    'bike': Icons.directions_bike,
+    'motorcycle': Icons.motorcycle,
+    'taxi': Icons.local_taxi,
+    'subway': Icons.subway,
+    'electric car': Icons.electric_car,
+
+    // Home & Utilities
+    'home': Icons.home,
+    'electrical': Icons.electrical_services,
+    'plumbing': Icons.plumbing,
+    'thermostat': Icons.thermostat,
+    'water': Icons.water_drop,
+    'wifi': Icons.wifi,
+    'phone': Icons.phone,
+    'tv': Icons.tv,
+    'cleaning': Icons.cleaning_services,
+    'repair': Icons.home_repair_service,
+
+    // Health & Medical
+    'medical': Icons.medical_services,
+    'hospital': Icons.local_hospital,
+    'pharmacy': Icons.local_pharmacy,
+    'medication': Icons.medication,
+    'psychology': Icons.psychology,
+    'spa': Icons.spa,
+    'improvement': Icons.self_improvement,
+    'medical info': Icons.medical_information,
+
+    // Entertainment
+    'movie': Icons.movie,
+    'theater': Icons.theater_comedy,
+    'music': Icons.music_note,
+    'gaming': Icons.sports_esports,
+    'soccer': Icons.sports_soccer,
+    'basketball': Icons.sports_basketball,
+    'park': Icons.park,
+    'camera': Icons.camera_alt,
+    'books': Icons.library_books,
+    'celebration': Icons.celebration,
+
+    // Education & Work
+    'school': Icons.school,
+    'work': Icons.work,
+    'business': Icons.business,
+    'computer': Icons.computer,
+    'book': Icons.book,
+    'menu book': Icons.menu_book,
+    'class': Icons.class_,
+    'workspace': Icons.workspace_premium,
+
+    // Fitness & Sports
+    'fitness': Icons.fitness_center,
+    'gymnastics': Icons.sports_gymnastics,
+    'pool': Icons.pool,
+    'hiking': Icons.hiking,
+    'tennis': Icons.sports_tennis,
+    'golf': Icons.golf_course,
+    'snowboarding': Icons.snowboarding,
+    'kayaking': Icons.kayaking,
+
+    // Finance & Business
+    'bank': Icons.account_balance,
+    'credit card': Icons.credit_card,
+    'savings': Icons.savings,
+    'paid': Icons.paid,
+    'money': Icons.attach_money,
+    'currency': Icons.currency_exchange,
+    'trending': Icons.trending_up,
+    'wallet': Icons.account_balance_wallet,
+    'receipt': Icons.receipt_long,
+    'calculate': Icons.calculate,
+
+    // Personal Care
+    'haircut': Icons.content_cut,
+    'face': Icons.face,
+    'clothing': Icons.checkroom,
+    'laundry': Icons.local_laundry_service,
+    'dry cleaning': Icons.dry_cleaning,
+
+    // Pets & Animals
+    'pets': Icons.pets,
+
+    // Travel & Vacation
+    'takeoff': Icons.flight_takeoff,
+    'hotel': Icons.hotel,
+    'luggage': Icons.luggage,
+    'map': Icons.map,
+    'beach': Icons.beach_access,
+    'tour': Icons.tour,
+
+    // Technology
+    'smartphone': Icons.smartphone,
+    'laptop': Icons.laptop,
+    'tablet': Icons.tablet,
+    'headphones': Icons.headphones,
+    'cable': Icons.cable,
+    'router': Icons.router,
+
+    // Miscellaneous
+    'category': Icons.category,
+    'star': Icons.star,
+    'favorite': Icons.favorite,
+    'gift': Icons.card_giftcard,
+    'volunteer': Icons.volunteer_activism,
+    'eco': Icons.eco,
+    'florist': Icons.local_florist,
+    'child care': Icons.child_care,
+    'elderly': Icons.elderly,
+  };
+
+  static List<IconData> get availableIcons => availableIconsMap.values.toList();
+
+  // Get dialog width based on screen size breakpoints
+  double _getDialogWidth(double screenWidth) {
+    if (screenWidth < 600) {
+      // xs - Small screens (phones)
+      return screenWidth * 0.9;
+    } else if (screenWidth < 900) {
+      // sm/md - Medium screens (tablets)
+      return 500;
+    } else if (screenWidth < 1200) {
+      // lg - Large screens (small laptops)
+      return 600;
+    } else {
+      // xl - Extra large screens (desktops)
+      return 700;
+    }
+  }
+
+  Widget _buildIconPicker(Color selectedColor, IconData selectedIcon, Function(IconData) onIconSelected) {
+    return SizedBox(
+      height: 240,
+      child: _IconPickerWidget(
+        selectedColor: selectedColor,
+        selectedIcon: selectedIcon,
+        onIconSelected: onIconSelected,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Categories'),
+        title: Row(
+          children: [
+            const Text('Categories'),
+            const SizedBox(width: 8),
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () => _showAddCategoryDialog(context),
+              tooltip: 'Add Category',
+            ),
+          ],
+        ),
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
         actions: [
           IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _showAddCategoryDialog(context),
-            tooltip: 'Add Category',
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsPage()),
+              );
+            },
+            tooltip: 'Settings',
           ),
         ],
       ),
-      drawer: widget.showDrawer ? const NavBar() : null,
-      body: Consumer<TransactionData>(
-        builder: (context, data, child) {
-          if (data.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          
-          if (data.categories.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.category_outlined, size: 64, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text(
-                    'No categories found',
-                    style: TextStyle(fontSize: 18),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Import transactions or add categories manually',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ],
-              ),
-            );
-          }
-          
-          // Sort categories alphabetically
-          final sortedCategories = List.from(data.categories)
-            ..sort((a, b) => a.name.compareTo(b.name));
-          
+      body: Consumer<TransactionProvider>(
+        builder: (context, provider, child) {
+          final categories = provider.categories.where((c) => c.id != 'uncategorized').toList();
+
           return ListView.builder(
             padding: const EdgeInsets.all(16),
-            itemCount: sortedCategories.length,
+            itemCount: categories.length,
             itemBuilder: (context, index) {
-              final category = sortedCategories[index];
-              
-              // Get transactions for this category
-              final categoryTransactions = data.getTransactionsByCategory(category.id);
-              final txCount = categoryTransactions.length;
-              
-              // Calculate total amount for this category
-              final totalAmount = categoryTransactions.fold(
-                0.0, 
-                (sum, tx) => sum + tx.amount.abs()
-              );
-              
+              final category = categories[index];
+              final transactionCount = provider.getTransactionsByCategory(category.id).length;
+              final total = provider.getTransactionsByCategory(category.id)
+                  .fold(0.0, (sum, t) => sum + t.amount.abs());
+
               return Card(
                 margin: const EdgeInsets.only(bottom: 12),
                 child: ListTile(
@@ -89,11 +231,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
                     category.name,
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  subtitle: Text(
-                    txCount > 0 
-                      ? '$txCount transactions, ${data.currencySymbol}${totalAmount.toStringAsFixed(2)}' 
-                      : 'No transactions',
-                  ),
+                  subtitle: Text('$transactionCount transactions • ${provider.currencySymbol}${total.toStringAsFixed(2)}'),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -103,20 +241,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete),
-                        onPressed: () => _showDeleteCategoryDialog(context, category),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.chevron_right),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => TransactionsPage(
-                                initialCategoryId: category.id,
-                              ),
-                            ),
-                          );
-                        },
+                        onPressed: () => _confirmDelete(context, provider, category),
                       ),
                     ],
                   ),
@@ -128,20 +253,25 @@ class _CategoriesPageState extends State<CategoriesPage> {
       ),
     );
   }
-  
+
   void _showAddCategoryDialog(BuildContext context) {
-    final TextEditingController nameController = TextEditingController();
+    final nameController = TextEditingController();
+    final keywordsController = TextEditingController();
     Color selectedColor = Colors.blue;
     IconData selectedIcon = Icons.category;
-    
+
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: const Text('Add Category'),
-              content: SingleChildScrollView(
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          final screenWidth = MediaQuery.of(context).size.width;
+          final dialogWidth = _getDialogWidth(screenWidth);
+
+          return AlertDialog(
+            title: const Text('Add Category'),
+            content: SizedBox(
+              width: dialogWidth,
+              child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -153,38 +283,41 @@ class _CategoriesPageState extends State<CategoriesPage> {
                       ),
                     ),
                     const SizedBox(height: 16),
+
+                    TextField(
+                      controller: keywordsController,
+                      decoration: const InputDecoration(
+                        labelText: 'Keywords (comma separated)',
+                        hintText: 'e.g., grocery, food, market',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Color picker
                     const Text('Select Color'),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
-                      runSpacing: 8,
                       children: [
                         Colors.red,
                         Colors.orange,
-                        Colors.amber,
                         Colors.green,
-                        Colors.teal,
                         Colors.blue,
-                        Colors.indigo,
                         Colors.purple,
+                        Colors.teal,
                         Colors.pink,
                         Colors.brown,
-                        Colors.grey,
-                        Colors.blueGrey,
                       ].map((color) {
                         return GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              selectedColor = color;
-                            });
-                          },
+                          onTap: () => setState(() => selectedColor = color),
                           child: Container(
-                            width: 36,
-                            height: 36,
+                            width: 40,
+                            height: 40,
                             decoration: BoxDecoration(
                               color: color,
                               shape: BoxShape.circle,
-                              border: color == selectedColor
+                              border: selectedColor == color
                                   ? Border.all(color: Colors.black, width: 2)
                                   : null,
                             ),
@@ -193,116 +326,100 @@ class _CategoriesPageState extends State<CategoriesPage> {
                       }).toList(),
                     ),
                     const SizedBox(height: 16),
-                    const Text('Select Icon'),
+
+                    // Icon picker
+                    _buildIconPicker(selectedColor, selectedIcon, (icon) {
+                      setState(() => selectedIcon = icon);
+                    }),
                     const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        Icons.home,
-                        Icons.fastfood,
-                        Icons.shopping_cart,
-                        Icons.directions_car,
-                        Icons.local_hospital,
-                        Icons.school,
-                        Icons.sports_basketball,
-                        Icons.movie,
-                        Icons.attach_money,
-                        Icons.flight,
-                        Icons.work,
-                        Icons.devices,
-                        Icons.local_grocery_store,
-                        Icons.fitness_center,
-                        Icons.category,
-                      ].map((icon) {
-                        return GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              selectedIcon = icon;
-                            });
-                          },
-                          child: Container(
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              color: icon == selectedIcon
-                                  ? selectedColor.withOpacity(0.2)
-                                  : Colors.transparent,
-                              shape: BoxShape.circle,
-                              border: icon == selectedIcon
-                                  ? Border.all(color: selectedColor, width: 1)
-                                  : null,
-                            ),
-                            child: Icon(icon, color: selectedColor),
-                          ),
-                        );
-                      }).toList(),
-                    ),
                   ],
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    if (nameController.text.trim().isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please enter a category name'),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  if (nameController.text.isNotEmpty) {
+                    final provider = Provider.of<TransactionProvider>(context, listen: false);
+                    final keywords = keywordsController.text
+                        .split(',')
+                        .map((k) => k.trim())
+                        .where((k) => k.isNotEmpty)
+                        .toList();
+
+                    final matchingCount = provider.countTransactionsByKeywords(keywords);
+
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Confirm Category'),
+                        content: Text(
+                          'This category will match $matchingCount existing uncategorized transactions. Do you want to proceed?'
                         ),
-                      );
-                      return;
-                    }
-                    
-                    final provider = Provider.of<TransactionData>(
-                      context, 
-                      listen: false
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            child: const Text('Cancel'),
+                          ),
+                          ElevatedButton(
+                            onPressed: () => Navigator.of(context).pop(true),
+                            child: const Text('Confirm'),
+                          ),
+                        ],
+                      ),
                     );
-                    
-                    provider.addCategory(
-                      Category(
-                        id: 'custom_${DateTime.now().millisecondsSinceEpoch}',
-                        name: nameController.text.trim(),
+
+                    if (confirmed == true) {
+                      final category = Category(
+                        id: 'cat_${DateTime.now().millisecondsSinceEpoch}',
+                        name: nameController.text,
                         color: selectedColor,
                         icon: selectedIcon,
-                        tags: [],
-                      ),
-                    );
-                    
-                    Navigator.pop(context);
-                    
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Category "${nameController.text.trim()}" added'),
-                      ),
-                    );
-                  },
-                  child: const Text('Add'),
-                ),
-              ],
-            );
-          },
-        );
+                        keywords: keywords,
+                      );
+
+                      await provider.addCategory(category);
+                      final recategorizedCount = await provider.recategorizeTransactionsByKeywords(category.id, keywords);
+                      if (context.mounted) {
+                        Navigator.pop(context);
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Category "${category.name}" added and $recategorizedCount transactions categorized')),
+                        );
+                      }
+                    }
+                  }
+                },
+                child: const Text('Add'),
+              ),
+            ],
+          );
       },
-    );
+    ));
   }
 
   void _showEditCategoryDialog(BuildContext context, Category category) {
-    final TextEditingController nameController = TextEditingController(text: category.name);
+    final nameController = TextEditingController(text: category.name);
+    final keywordsController = TextEditingController(text: category.keywords.join(', '));
     Color selectedColor = category.color;
     IconData selectedIcon = category.icon;
-    
+
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: const Text('Edit Category'),
-              content: SingleChildScrollView(
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          final screenWidth = MediaQuery.of(context).size.width;
+          final dialogWidth = _getDialogWidth(screenWidth);
+
+          return AlertDialog(
+            title: const Text('Edit Category'),
+            content: SizedBox(
+              width: dialogWidth,
+              child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -314,38 +431,41 @@ class _CategoriesPageState extends State<CategoriesPage> {
                       ),
                     ),
                     const SizedBox(height: 16),
+
+                    TextField(
+                      controller: keywordsController,
+                      decoration: const InputDecoration(
+                        labelText: 'Keywords (comma separated)',
+                        hintText: 'e.g., grocery, food, market',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Color picker
                     const Text('Select Color'),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
-                      runSpacing: 8,
                       children: [
                         Colors.red,
                         Colors.orange,
-                        Colors.amber,
                         Colors.green,
-                        Colors.teal,
                         Colors.blue,
-                        Colors.indigo,
                         Colors.purple,
+                        Colors.teal,
                         Colors.pink,
                         Colors.brown,
-                        Colors.grey,
-                        Colors.blueGrey,
                       ].map((color) {
                         return GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              selectedColor = color;
-                            });
-                          },
+                          onTap: () => setState(() => selectedColor = color),
                           child: Container(
-                            width: 36,
-                            height: 36,
+                            width: 40,
+                            height: 40,
                             decoration: BoxDecoration(
                               color: color,
                               shape: BoxShape.circle,
-                              border: color.value == selectedColor.value
+                              border: selectedColor == color
                                   ? Border.all(color: Colors.black, width: 2)
                                   : null,
                             ),
@@ -354,143 +474,246 @@ class _CategoriesPageState extends State<CategoriesPage> {
                       }).toList(),
                     ),
                     const SizedBox(height: 16),
-                    const Text('Select Icon'),
+
+                    // Icon picker
+                    _buildIconPicker(selectedColor, selectedIcon, (icon) {
+                      setState(() => selectedIcon = icon);
+                    }),
                     const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        Icons.home,
-                        Icons.fastfood,
-                        Icons.shopping_cart,
-                        Icons.directions_car,
-                        Icons.local_hospital,
-                        Icons.school,
-                        Icons.sports_basketball,
-                        Icons.movie,
-                        Icons.attach_money,
-                        Icons.flight,
-                        Icons.work,
-                        Icons.devices,
-                        Icons.local_grocery_store,
-                        Icons.fitness_center,
-                        Icons.category,
-                      ].map((icon) {
-                        return GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              selectedIcon = icon;
-                            });
-                          },
-                          child: Container(
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              color: icon == selectedIcon
-                                  ? selectedColor.withOpacity(0.2)
-                                  : Colors.transparent,
-                              shape: BoxShape.circle,
-                              border: icon == selectedIcon
-                                  ? Border.all(color: selectedColor, width: 1)
-                                  : null,
-                            ),
-                            child: Icon(icon, color: selectedColor),
-                          ),
-                        );
-                      }).toList(),
-                    ),
                   ],
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    if (nameController.text.trim().isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please enter a category name'),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  if (nameController.text.isNotEmpty) {
+                    final provider = Provider.of<TransactionProvider>(context, listen: false);
+                    final keywords = keywordsController.text
+                        .split(',')
+                        .map((k) => k.trim())
+                        .where((k) => k.isNotEmpty)
+                        .toList();
+
+                    // Calculate the impact of changes
+                    final changes = provider.calculateCategoryChanges(category, keywords);
+                    final totalChanges = changes['added']! + changes['removed']!;
+
+                    bool proceed = true;
+                    if (totalChanges > 0) {
+                      proceed = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Confirm Changes'),
+                          content: Text(
+                            'This update will:\n'
+                            '• Add ${changes['added']} transactions to this category\n'
+                            '• Remove ${changes['removed']} transactions from this category\n\n'
+                            'Do you want to proceed?'
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: const Text('Cancel'),
+                            ),
+                            ElevatedButton(
+                              onPressed: () => Navigator.of(context).pop(true),
+                              child: const Text('Confirm'),
+                            ),
+                          ],
                         ),
-                      );
-                      return;
+                      ) ?? false;
                     }
-                    
-                    final provider = Provider.of<TransactionData>(
-                      context, 
-                      listen: false
-                    );
-                    
-                    provider.updateCategory(
-                      Category(
+
+                    if (proceed) {
+                      final updatedCategory = Category(
                         id: category.id,
-                        name: nameController.text.trim(),
+                        name: nameController.text,
                         color: selectedColor,
                         icon: selectedIcon,
-                        tags: category.tags,
-                      ),
-                    );
-                    
-                    Navigator.pop(context);
-                    
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Category "${nameController.text.trim()}" updated'),
-                      ),
-                    );
-                  },
-                  child: const Text('Save'),
-                ),
-              ],
-            );
-          },
-        );
+                        keywords: keywords,
+                      );
+
+                      await provider.updateCategory(updatedCategory);
+                      final actualChanges = await provider.updateCategoryAndRecategorize(updatedCategory, keywords);
+                      if (context.mounted) {
+                        Navigator.pop(context);
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Category "${updatedCategory.name}" updated: ${actualChanges['added']} added, ${actualChanges['removed']} removed')),
+                        );
+                      }
+                    }
+                  }
+                },
+                child: const Text('Update'),
+              ),
+            ],
+          );
       },
-    );
+    ));
   }
-  
-  void _showDeleteCategoryDialog(BuildContext context, Category category) {
+
+  void _confirmDelete(BuildContext context, TransactionProvider provider, Category category) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Delete Category'),
-          content: Text(
-            'Are you sure you want to delete the category "${category.name}"? '
-            'All transactions in this category will be marked as "Uncategorized".'
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Category'),
+        content: Text(
+          'Are you sure you want to delete "${category.name}"?\n\n'
+              'All transactions in this category will be marked as uncategorized.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                final provider = Provider.of<TransactionData>(
-                  context, 
-                  listen: false
-                );
-                
-                provider.deleteCategory(category.id);
-                
-                Navigator.pop(context);
-                
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Category "${category.name}" deleted'),
+          TextButton(
+            onPressed: () {
+              provider.deleteCategory(category.id);
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Category "${category.name}" deleted')),
+              );
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _IconPickerWidget extends StatefulWidget {
+  final Color selectedColor;
+  final IconData selectedIcon;
+  final Function(IconData) onIconSelected;
+
+  const _IconPickerWidget({
+    required this.selectedColor,
+    required this.selectedIcon,
+    required this.onIconSelected,
+  });
+
+  @override
+  State<_IconPickerWidget> createState() => _IconPickerWidgetState();
+}
+
+class _IconPickerWidgetState extends State<_IconPickerWidget> {
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<MapEntry<String, IconData>> get _filteredIcons {
+    if (_searchQuery.isEmpty) {
+      return CategoriesPage.availableIconsMap.entries.toList();
+    }
+
+    return CategoriesPage.availableIconsMap.entries
+        .where((entry) => entry.key.toLowerCase().contains(_searchQuery.toLowerCase()))
+        .toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text('Select Icon'),
+            const SizedBox(width: 16),
+            SizedBox(
+              width: 200,
+              height: 40,
+              child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Search icons...',
+                    prefixIcon: const Icon(Icons.search, size: 20),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 20),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() => _searchQuery = '');
+                            },
+                          )
+                        : null,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
-                );
-              },
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.red,
+                  style: const TextStyle(fontSize: 14),
+                  onChanged: (value) => setState(() => _searchQuery = value),
+                ),
               ),
-              child: const Text('Delete'),
-            ),
           ],
-        );
-      },
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 160,
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: _filteredIcons.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.search_off, size: 48, color: Colors.grey.shade400),
+                      const SizedBox(height: 8),
+                      Text(
+                        'No icons found for "$_searchQuery"',
+                        style: TextStyle(color: Colors.grey.shade600),
+                      ),
+                    ],
+                  ),
+                )
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.all(8),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _filteredIcons.map((entry) {
+                      final icon = entry.value;
+                      return Tooltip(
+                        message: entry.key,
+                        child: GestureDetector(
+                          onTap: () => widget.onIconSelected(icon),
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: widget.selectedIcon == icon
+                                  ? widget.selectedColor.withOpacity(0.2)
+                                  : Colors.transparent,
+                              shape: BoxShape.circle,
+                              border: widget.selectedIcon == icon
+                                  ? Border.all(color: widget.selectedColor)
+                                  : null,
+                            ),
+                            child: Icon(icon, color: widget.selectedColor, size: 20),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+        ),
+      ],
     );
   }
 }

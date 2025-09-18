@@ -1,245 +1,301 @@
 // widgets/date_range_selector.dart
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../providers/transaction_provider.dart';
 
-enum DateRangeOption {
-  sevenDays('Last 7 Days', 7),
-  thirtyDays('Last 30 Days', 30),
-  thisMonth('This Month', 0),
-  lastMonth('Last Month', 0),
-  threeMonths('Last 3 Months', 90),
-  sixMonths('Last 6 Months', 180),
-  ytd('Year to Date', 0),
-  oneYear('Last 12 Months', 365),
-  custom('Custom Range', 0);
-
-  final String label;
-  final int days;
-
-  const DateRangeOption(this.label, this.days);
-}
-
-class DateRangeSelector extends StatefulWidget {
-  final bool showTitle;
-  final bool compact;
+class DateRangeSelector extends StatelessWidget {
+  final bool showTrendsOptions;
 
   const DateRangeSelector({
     super.key,
-    this.showTitle = true,
-    this.compact = false,
+    this.showTrendsOptions = false,
   });
 
   @override
-  _DateRangeSelectorState createState() => _DateRangeSelectorState();
-}
-
-class _DateRangeSelectorState extends State<DateRangeSelector> {
-  DateRangeOption _selectedOption = DateRangeOption.thirtyDays;
-
-  @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<TransactionData>(context);
-
-    return Card(
-      child: Padding(
-        padding: EdgeInsets.all(widget.compact ? 8 : 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (widget.showTitle)
-              Text(
-                'Date Range:',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            if (widget.showTitle) SizedBox(height: 8),
-            Row(
+    return Consumer<TransactionProvider>(
+      builder: (context, provider, child) {
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Text(
-                    '${DateFormat('MMM d, yyyy').format(provider.startDate)} to ${DateFormat('MMM d, yyyy').format(provider.endDate)}',
-                    style: TextStyle(fontSize: widget.compact ? 14 : 16),
-                  ),
-                ),
-                PopupMenuButton<DateRangeOption>(
-                  tooltip: 'Select date range',
-                  child: Chip(
-                    label: Text(_selectedOption.label),
-                    avatar: Icon(Icons.date_range, size: 16),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                  initialValue: _selectedOption,
-                  onSelected: (option) {
-                    setState(() {
-                      _selectedOption = option;
-                    });
-
-                    if (option == DateRangeOption.custom) {
-                      _showCustomDatePicker(context, provider);
-                    } else {
-                      _applyDateRange(option, provider);
-                    }
-                  },
-                  itemBuilder: (context) {
-                    return DateRangeOption.values.map((option) {
-                      return PopupMenuItem<DateRangeOption>(
-                        value: option,
-                        child: Text(option.label),
-                      );
-                    }).toList();
-                  },
-                ),
-              ],
-            ),
-            if (!widget.compact) SizedBox(height: 8),
-            if (!widget.compact)
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _quickDateButton(
-                      context,
-                      '7 Days',
-                      DateRangeOption.sevenDays,
-                    ),
-                    SizedBox(width: 8),
-                    _quickDateButton(
-                      context,
-                      '30 Days',
-                      DateRangeOption.thirtyDays,
-                    ),
-                    SizedBox(width: 8),
-                    _quickDateButton(
-                      context,
-                      'This Month',
-                      DateRangeOption.thisMonth,
-                    ),
-                    SizedBox(width: 8),
-                    _quickDateButton(
-                      context,
-                      '3 Months',
-                      DateRangeOption.threeMonths,
-                    ),
-                    SizedBox(width: 8),
-                    _quickDateButton(context, 'YTD', DateRangeOption.ytd),
-                    SizedBox(width: 8),
-                    _quickDateButton(
-                      context,
-                      '1 Year',
-                      DateRangeOption.oneYear,
+                    Text(
+                      '${DateFormat.MMMd().format(provider.startDate)} - ${DateFormat.MMMd().format(provider.endDate)}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                   ],
                 ),
-              ),
-          ],
+                const SizedBox(height: 8),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _buildQuickOption(
+                        context,
+                        'Last 7 Days',
+                        () => _setLastDays(provider, 7),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildQuickOption(
+                        context,
+                        'Last 30 Days',
+                        () => _setLastDays(provider, 30),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildQuickOption(
+                        context,
+                        'This Month',
+                        () => _setThisMonth(provider),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildQuickOption(
+                        context,
+                        'Last Month',
+                        () => _setLastMonth(provider),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildQuickOption(
+                        context,
+                        'Last 3 Months',
+                        () => _setLastThreeMonths(provider),
+                      ),
+                      if (showTrendsOptions) ...[
+                        const SizedBox(width: 8),
+                        _buildQuickOption(
+                          context,
+                          'Last 6 Months',
+                          () => _setLastMonths(provider, 6),
+                        ),
+                        const SizedBox(width: 8),
+                        _buildQuickOption(
+                          context,
+                          'Last 1 Year',
+                          () => _setLastMonths(provider, 12),
+                        ),
+                      ],
+                      const SizedBox(width: 8),
+                      _buildQuickOption(
+                        context,
+                        'All Time',
+                        () => _setAllTime(provider),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildQuickOption(
+                        context,
+                        'Custom',
+                        () => _selectCustomRange(context, provider),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildQuickOption(BuildContext context, String label, VoidCallback onTap) {
+    return Material(
+      color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.primary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ),
       ),
     );
   }
 
-  Widget _quickDateButton(
-    BuildContext context,
-    String label,
-    DateRangeOption option,
-  ) {
-    final provider = Provider.of<TransactionData>(context, listen: false);
-    final isSelected = _selectedOption == option;
-
-    return ElevatedButton(
-      onPressed: () {
-        setState(() {
-          _selectedOption = option;
-        });
-        _applyDateRange(option, provider);
-      },
-      style: ElevatedButton.styleFrom(
-        backgroundColor:
-            isSelected
-                ? Theme.of(context).colorScheme.primaryContainer
-                : Theme.of(context).colorScheme.surface,
-        foregroundColor:
-            isSelected
-                ? Theme.of(context).colorScheme.onPrimaryContainer
-                : Theme.of(context).colorScheme.onSurface,
-      ),
-      child: Text(label),
-    );
-  }
-
-  void _applyDateRange(DateRangeOption option, TransactionData provider) {
-    final now = DateTime.now();
-    DateTime start;
-    DateTime end = now;
-
-    switch (option) {
-      case DateRangeOption.sevenDays:
-      case DateRangeOption.thirtyDays:
-      case DateRangeOption.threeMonths:
-      case DateRangeOption.sixMonths:
-      case DateRangeOption.oneYear:
-        start = now.subtract(Duration(days: option.days));
-        break;
-
-      case DateRangeOption.thisMonth:
-        start = DateTime(now.year, now.month, 1);
-        break;
-
-      case DateRangeOption.lastMonth:
-        // Last day of previous month
-        final lastMonth = DateTime(now.year, now.month - 1);
-        start = DateTime(lastMonth.year, lastMonth.month, 1);
-        end = DateTime(now.year, now.month, 0); // Last day of previous month
-        break;
-
-      case DateRangeOption.ytd:
-        start = DateTime(now.year, 1, 1); // January 1st of current year
-        break;
-
-      case DateRangeOption.custom:
-        // Don't change dates for custom - will be handled by date picker
-        return;
-    }
-
+  void _setLastDays(TransactionProvider provider, int days) {
+    final end = DateTime.now();
+    final start = end.subtract(Duration(days: days));
     provider.setDateRange(start, end);
   }
 
-  Future<void> _showCustomDatePicker(
-    BuildContext context,
-    TransactionData provider,
-  ) async {
-    final DateTimeRange? picked = await showDateRangePicker(
+  void _setThisMonth(TransactionProvider provider) {
+    final now = DateTime.now();
+    final start = DateTime(now.year, now.month, 1);
+    provider.setDateRange(start, now);
+  }
+
+  void _setLastMonth(TransactionProvider provider) {
+    final now = DateTime.now();
+    final start = DateTime(now.year, now.month - 1, 1);
+    final end = DateTime(now.year, now.month, 0);
+    provider.setDateRange(start, end);
+  }
+
+  void _setLastThreeMonths(TransactionProvider provider) {
+    final now = DateTime.now();
+    // Start from 3 months ago (beginning of that month)
+    final start = DateTime(now.year, now.month - 2, 1);
+    // End at current date
+    provider.setDateRange(start, now);
+  }
+
+  void _setLastMonths(TransactionProvider provider, int months) {
+    final now = DateTime.now();
+    final start = DateTime(now.year, now.month - (months - 1), 1);
+    provider.setDateRange(start, now);
+  }
+
+  void _setAllTime(TransactionProvider provider) {
+    if (provider.transactions.isEmpty) return;
+
+    final dates = provider.transactions.map((t) => t.date).toList();
+    dates.sort();
+    provider.setDateRange(dates.first, DateTime.now());
+  }
+
+  Future<void> _selectCustomRange(BuildContext context, TransactionProvider provider) async {
+    final DateTimeRange? picked = await showDialog<DateTimeRange>(
       context: context,
-      firstDate: DateTime(2000),
-      lastDate: DateTime.now(),
-      initialDateRange: DateTimeRange(
-        start: provider.startDate,
-        end: provider.endDate,
-      ),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: Theme.of(context).colorScheme.copyWith(
-              primary: Theme.of(context).colorScheme.primary,
-              onPrimary: Theme.of(context).colorScheme.onPrimary,
-            ),
+      builder: (BuildContext context) {
+        return CustomDateRangePickerDialog(
+          initialDateRange: DateTimeRange(
+            start: provider.startDate,
+            end: provider.endDate,
           ),
-          child: child!,
         );
       },
     );
 
     if (picked != null) {
       provider.setDateRange(picked.start, picked.end);
-    } else {
-      // If canceled, revert to previous selection
-      final previousOption = DateRangeOption.values.firstWhere(
-        (o) => o != DateRangeOption.custom,
-        orElse: () => DateRangeOption.thirtyDays,
-      );
+    }
+  }
+}
+
+class CustomDateRangePickerDialog extends StatefulWidget {
+  final DateTimeRange initialDateRange;
+
+  const CustomDateRangePickerDialog({super.key, required this.initialDateRange});
+
+  @override
+  State<CustomDateRangePickerDialog> createState() => _CustomDateRangePickerDialogState();
+}
+
+class _CustomDateRangePickerDialogState extends State<CustomDateRangePickerDialog> {
+  late DateTime _startDate;
+  late DateTime _endDate;
+  final _startDateController = TextEditingController();
+  final _endDateController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _startDate = widget.initialDateRange.start;
+    _endDate = widget.initialDateRange.end;
+    _updateDateText();
+  }
+
+  void _updateDateText() {
+    _startDateController.text = DateFormat.yMMMd().format(_startDate);
+    _endDateController.text = DateFormat.yMMMd().format(_endDate);
+  }
+
+  Future<void> _showCalendar() async {
+    final picked = await showDateRangePicker(
+      context: context,
+      initialDateRange: DateTimeRange(start: _startDate, end: _endDate),
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null) {
       setState(() {
-        _selectedOption = previousOption;
+        _startDate = picked.start;
+        _endDate = picked.end;
+        _updateDateText();
       });
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: SizedBox(
+        width: 400,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 8, 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Select Date Range',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.calendar_month),
+                    onPressed: _showCalendar,
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextField(
+                    controller: _startDateController,
+                    decoration: const InputDecoration(labelText: 'Start Date'),
+                    readOnly: true,
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _endDateController,
+                    decoration: const InputDecoration(labelText: 'End Date'),
+                    readOnly: true,
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel'),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context, DateTimeRange(start: _startDate, end: _endDate));
+                    },
+                    child: const Text('OK'),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

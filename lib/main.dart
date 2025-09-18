@@ -7,7 +7,7 @@ import 'screens/home_page.dart';
 void main() {
   runApp(
     ChangeNotifierProvider(
-      create: (context) => TransactionData()..initialize(),
+      create: (context) => TransactionProvider()..initialize(),
       child: const MyApp(),
     ),
   );
@@ -18,28 +18,29 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<TransactionData>(context);
-
-    return MaterialApp(
-      title: 'Budget Tracker',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
-          brightness: Brightness.light,
-        ),
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-        useMaterial3: true,
-      ),
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
-          brightness: Brightness.dark,
-        ),
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-        useMaterial3: true,
-      ),
-      themeMode: provider.themeMode,
-      home: const HomePage(),
+    return Consumer<TransactionProvider>(
+      builder: (context, provider, child) {
+        return MaterialApp(
+          title: 'Budget Tracker',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: Colors.blue,
+              brightness: Brightness.light,
+            ),
+            useMaterial3: true,
+          ),
+          darkTheme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: Colors.blue,
+              brightness: Brightness.dark,
+            ),
+            useMaterial3: true,
+          ),
+          themeMode: provider.themeMode,
+          home: const HomePage(),
+        );
+      },
     );
   }
 }

@@ -1,139 +1,132 @@
 // models/transaction.dart
 import 'package:intl/intl.dart';
 
-enum TransactionType { expense, income, transfer }
+enum TransactionType { income, expense }
 
 class Transaction {
+  final String id;
   final DateTime date;
   final String description;
   final double amount;
-  final double balance;
-  String category;
+  String categoryId;
   final TransactionType type;
-  final String id; // Unique identifier for transactions
 
   Transaction({
+    String? id,
     required this.date,
     required this.description,
     required this.amount,
-    this.balance = 0.0,
-    this.category = 'Uncategorized',
+    this.categoryId = 'uncategorized',
     TransactionType? type,
-    String? id,
-  }) : type =
-           type ??
-           (amount < 0 ? TransactionType.expense : TransactionType.income),
-       id =
-           id ??
-           DateTime.now().millisecondsSinceEpoch.toString() +
-               description.hashCode.toString();
+  }) : id = id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        type = type ?? (amount >= 0 ? TransactionType.income : TransactionType.expense);
 
-  // Create from CSV row data
-  factory Transaction.fromCsv(List<String> row) {
-    // Assumes format: date, description, amount, balance
-    // date format is yyyymmdd
-    DateTime date;
-    try {
-      final dateString = row[0];
-      if (dateString.length >= 8) {
-        final year = int.parse(dateString.substring(0, 4));
-        final month = int.parse(dateString.substring(4, 6));
-        final day = int.parse(dateString.substring(6, 8));
-        date = DateTime(year, month, day);
-      } else {
-        date = DateTime.now();
-      }
-    } catch (e) {
-      date = DateTime.now();
-    }
-
-    return Transaction(
-      date: date,
-      description: row[1],
-      amount: double.parse(row[2]),
-      balance: double.parse(row[3]),
-    );
-  }
-
-  // Convert to Map for storage
+  // Convert to JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'date': DateFormat('yyyyMMdd').format(date),
+      'date': date.toIso8601String(),
       'description': description,
       'amount': amount,
-      'balance': balance,
-      'category': category,
-      'type': type.toString().split('.').last, // Store enum as string
+      'categoryId': categoryId,
+      'type': type.toString().split('.').last,
     };
   }
 
-  // Create from stored JSON data
+  // Create from JSON
   factory Transaction.fromJson(Map<String, dynamic> json) {
-    DateTime date;
-    try {
-      final dateString = json['date'] as String;
-      if (dateString.length >= 8) {
-        final year = int.parse(dateString.substring(0, 4));
-        final month = int.parse(dateString.substring(4, 6));
-        final day = int.parse(dateString.substring(6, 8));
-        date = DateTime(year, month, day);
-      } else {
-        date = DateTime.now();
-      }
-    } catch (e) {
-      date = DateTime.now();
-    }
-
-    // Handle numeric conversions safely
-    double parseAmount() {
-      var amount = json['amount'];
-      if (amount is int) {
-        return amount.toDouble();
-      } else if (amount is double) {
-        return amount;
-      }
-      return 0.0;
-    }
-
-    double parseBalance() {
-      var balance = json['balance'];
-      if (balance is int) {
-        return balance.toDouble();
-      } else if (balance is double) {
-        return balance;
-      }
-      return 0.0;
-    }
-
     return Transaction(
       id: json['id'],
-      date: date,
+      date: DateTime.parse(json['date']),
       description: json['description'],
-      amount: parseAmount(),
-      balance: parseBalance(),
-      category: json['category'] ?? 'Uncategorized',
-      type: TransactionType.values.firstWhere(
-        (e) => e.toString().split('.').last == json['type'],
-        orElse:
-            () =>
-                json['amount'] < 0
-                    ? TransactionType.expense
-                    : TransactionType.income,
-      ),
+      amount: (json['amount'] as num).toDouble(),
+      categoryId: json['categoryId'] ?? 'uncategorized',
+      type: json['type'] == 'income' ? TransactionType.income : TransactionType.expense,
     );
   }
 
-  // Clone with new category
-  Transaction copyWith({String? newCategory}) {
+  static Transaction? fromCsvRow(List<dynamic> row, {
+    int dateIndex = 0,
+    int descriptionIndex = 1,
+    int amountIndex = 2,
+  }) {
+    try {
+      if (row.length <= amountIndex) {
+        return null; // Not enough columns
+      }
+
+      // Parse date
+      DateTime? date;
+      String dateStr = row[dateIndex].toString().trim();
+      if (dateStr.length == 8 && int.tryParse(dateStr) != null) {
+        date = DateTime(
+          int.parse(dateStr.substring(0, 4)),
+          int.parse(dateStr.substring(4, 6)),
+          int.parse(dateStr.substring(6, 8)),
+        );
+      } else {
+        try {
+          date = DateFormat('yyyy-MM-dd').parse(dateStr);
+        } catch (_) {
+          try {
+            date = DateFormat('MM/dd/yyyy').parse(dateStr);
+          } catch (_) {
+            try {
+              date = DateFormat('dd/MM/yyyy').parse(dateStr);
+            } catch (_) {
+            }
+          }
+        }
+      }
+      if (date == null) {
+        return null;
+      }
+
+
+      String description = row[descriptionIndex].toString().trim();
+
+      // Parse amount
+      double? amount;
+      String amountStr = row[amountIndex].toString().trim();
+      try {
+        amount = double.parse(amountStr);
+      } catch (e) {
+        final numberFormat = NumberFormat("#,##0.00", "en_ZA");
+        try {
+          amount = numberFormat.parse(amountStr).toDouble();
+        } catch (e) {
+          return null;
+        }
+      }
+
+      final uniqueId = '${DateTime.now().millisecondsSinceEpoch}-${row.hashCode}';
+
+      return Transaction(
+        id: uniqueId,
+        date: date,
+        description: description,
+        amount: amount,
+      );
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Copy with modifications
+  Transaction copyWith({
+    DateTime? date,
+    String? description,
+    double? amount,
+    String? categoryId,
+    TransactionType? type,
+  }) {
     return Transaction(
       id: id,
-      date: date,
-      description: description,
-      amount: amount,
-      balance: balance,
-      category: newCategory ?? category,
-      type: type,
+      date: date ?? this.date,
+      description: description ?? this.description,
+      amount: amount ?? this.amount,
+      categoryId: categoryId ?? this.categoryId,
+      type: type ?? this.type,
     );
   }
 }
