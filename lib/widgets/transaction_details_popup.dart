@@ -71,10 +71,12 @@ class TransactionDetailsPopup {
               final command = provider.createDeleteTransactionCommand(transaction.id);
               await undoRedoProvider.executeCommand(command);
 
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Transaction deleted')),
-              );
+              if (context.mounted) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Transaction deleted')),
+                );
+              }
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Delete'),
@@ -107,18 +109,20 @@ class TransactionDetailsPopup {
       ),
     );
 
-    if (createTag == true) {
-      await _createTagAndCategorize(context, transaction, category, provider);
-    } else {
-      // Just update this single transaction
-      final undoRedoProvider = Provider.of<UndoRedoProvider>(context, listen: false);
-      final command = provider.createUpdateTransactionCategoryCommand(transaction.id, category.id);
-      await undoRedoProvider.executeCommand(command);
+    if (context.mounted) {
+      if (createTag == true) {
+        await _createTagAndCategorize(context, transaction, category, provider);
+      } else {
+        // Just update this single transaction
+        final undoRedoProvider = Provider.of<UndoRedoProvider>(context, listen: false);
+        final command = provider.createUpdateTransactionCategoryCommand(transaction.id, category.id);
+        await undoRedoProvider.executeCommand(command);
 
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Category updated to ${category.name}')),
-        );
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Category updated to ${category.name}')),
+          );
+        }
       }
     }
   }
@@ -326,10 +330,10 @@ class _TransactionDetailsContentState extends State<_TransactionDetailsContent> 
                 return Card(
                   margin: const EdgeInsets.only(bottom: 8),
                   elevation: isSelected ? 2 : 0,
-                  color: isSelected ? category.color.withOpacity(0.1) : null,
+                  color: isSelected ? category.color.withValues(alpha: 0.1) : null,
                   child: ListTile(
                     leading: CircleAvatar(
-                      backgroundColor: category.color.withOpacity(0.2),
+                      backgroundColor: category.color.withValues(alpha: 0.2),
                       child: Icon(category.icon, color: category.color, size: 20),
                     ),
                     title: Text(
@@ -355,10 +359,12 @@ class _TransactionDetailsContentState extends State<_TransactionDetailsContent> 
                         final command = widget.provider.createUpdateTransactionCategoryCommand(widget.transaction.id, category.id);
                         await undoRedoProvider.executeCommand(command);
 
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Category updated to ${category.name}')),
-                        );
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Category updated to ${category.name}')),
+                          );
+                        }
                       }
                     },
                   ),

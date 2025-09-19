@@ -243,7 +243,7 @@ class _BudgetAnalysisChartState extends State<BudgetAnalysisChart> {
         bars.add(
           BarChartRodData(
             toY: budgetValue,
-            color: Colors.grey.withOpacity(0.5),
+            color: Colors.grey.withValues(alpha: 0.5),
             width: 8,
             borderRadius: BorderRadius.circular(2),
           ),
@@ -321,7 +321,7 @@ class _BudgetAnalysisChartState extends State<BudgetAnalysisChart> {
       barTouchData: BarTouchData(
         enabled: true,
         touchTooltipData: BarTouchTooltipData(
-          tooltipBgColor: Colors.blueGrey.withOpacity(0.9),
+          tooltipBgColor: Colors.blueGrey.withValues(alpha: 0.9),
           tooltipRoundedRadius: 8,
           tooltipPadding: const EdgeInsets.all(8),
           getTooltipItem: (group, groupIndex, rod, rodIndex) {
@@ -401,7 +401,7 @@ class _BudgetAnalysisChartState extends State<BudgetAnalysisChart> {
       children: [
         _buildLegendItem('Actual Spending', Colors.blue),
         const SizedBox(width: 24),
-        _buildLegendItem('Budget Baseline', Colors.grey.withOpacity(0.5)),
+        _buildLegendItem('Budget Baseline', Colors.grey.withValues(alpha: 0.5)),
       ],
     );
   }
@@ -519,7 +519,7 @@ class _BudgetAnalysisChartState extends State<BudgetAnalysisChart> {
           label,
           style: TextStyle(
             fontSize: 10,
-            color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7),
+            color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
             fontWeight: FontWeight.w500,
           ),
           textAlign: TextAlign.center,

@@ -290,7 +290,7 @@ class _CategoryGrowthChartState extends State<CategoryGrowthChart> {
       lineTouchData: LineTouchData(
         enabled: true,
         touchTooltipData: LineTouchTooltipData(
-          tooltipBgColor: Colors.blueGrey.withOpacity(0.9),
+          tooltipBgColor: Colors.blueGrey.withValues(alpha: 0.9),
           tooltipRoundedRadius: 8,
           tooltipPadding: const EdgeInsets.all(8),
           getTooltipItems: (touchedSpots) {

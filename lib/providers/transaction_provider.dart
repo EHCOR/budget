@@ -102,7 +102,7 @@ class TransactionProvider extends ChangeNotifier {
           : ThemeMode.system;
 
     } catch (e) {
-      print('Error initializing: $e');
+      // Error initializing: $e
     } finally {
       _setLoading(false);
     }
@@ -556,7 +556,7 @@ class TransactionProvider extends ChangeNotifier {
       }
       return success;
     } catch (e) {
-      print('Error importing data: $e');
+      // Error importing data: $e
       return false;
     }
   }

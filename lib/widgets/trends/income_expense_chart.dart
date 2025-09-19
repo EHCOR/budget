@@ -117,7 +117,7 @@ class IncomeExpenseChart extends StatelessWidget {
           dotData: const FlDotData(show: true),
           belowBarData: BarAreaData(
             show: true,
-            color: Colors.green.withOpacity(0.1),
+            color: Colors.green.withValues(alpha: 0.1),
           ),
         ),
         // Expense line
@@ -129,7 +129,7 @@ class IncomeExpenseChart extends StatelessWidget {
           dotData: const FlDotData(show: true),
           belowBarData: BarAreaData(
             show: true,
-            color: Colors.red.withOpacity(0.1),
+            color: Colors.red.withValues(alpha: 0.1),
           ),
         ),
         // Net savings line
@@ -201,7 +201,7 @@ class IncomeExpenseChart extends StatelessWidget {
       lineTouchData: LineTouchData(
         enabled: true,
         touchTooltipData: LineTouchTooltipData(
-          tooltipBgColor: Colors.blueGrey.withOpacity(0.9),
+          tooltipBgColor: Colors.blueGrey.withValues(alpha: 0.9),
           tooltipRoundedRadius: 8,
           tooltipPadding: const EdgeInsets.all(8),
           getTooltipItems: (touchedSpots) {
@@ -342,7 +342,7 @@ class IncomeExpenseChart extends StatelessWidget {
           label,
           style: TextStyle(
             fontSize: 10,
-            color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7),
+            color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
             fontWeight: FontWeight.w500,
           ),
           textAlign: TextAlign.center,

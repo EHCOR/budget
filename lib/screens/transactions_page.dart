@@ -203,7 +203,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
             // Date header
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+              color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -270,7 +270,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
       },
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: (category?.color ?? Colors.grey).withOpacity(0.2),
+          backgroundColor: (category?.color ?? Colors.grey).withValues(alpha: 0.2),
           child: Icon(
             category?.icon ?? Icons.help_outline,
             color: category?.color ?? Colors.grey,
@@ -559,7 +559,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
   ) {
     return Material(
       color: isSelected
-          ? color.withOpacity(0.15)
+          ? color.withValues(alpha: 0.15)
           : Theme.of(context).colorScheme.surface,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
@@ -572,7 +572,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
             border: Border.all(
               color: isSelected
                   ? color
-                  : Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                  : Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
               width: isSelected ? 2 : 1,
             ),
           ),
@@ -607,7 +607,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
   ) {
     return Material(
       color: isSelected
-          ? category.color.withOpacity(0.15)
+          ? category.color.withValues(alpha: 0.15)
           : Theme.of(context).colorScheme.surface,
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
@@ -620,7 +620,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
             border: Border.all(
               color: isSelected
                   ? category.color
-                  : Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                  : Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
               width: isSelected ? 2 : 1,
             ),
           ),

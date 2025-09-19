@@ -242,13 +242,15 @@ class _CsvImportDialogState extends State<CsvImportDialog> {
         );
       }
     } catch (e) {
-      setState(() {
-        _isProcessing = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error importing: ${e.toString()}')),
-      );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error importing: ${e.toString()}')),
+        );
+      }
     }
   }
 }

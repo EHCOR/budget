@@ -21,7 +21,7 @@ class Category {
     return {
       'id': id,
       'name': name,
-      'color': color.value,
+      'color': color.toARGB32(),
       'icon': icon.codePoint,
       'keywords': keywords,
     };
@@ -32,7 +32,7 @@ class Category {
     return Category(
       id: json['id'] ?? '',
       name: json['name'] ?? 'Uncategorized',
-      color: Color(json['color'] ?? Colors.grey.value),
+      color: Color(json['color'] ?? Colors.grey.toARGB32()),
       icon: IconData(
         json['icon'] ?? Icons.category.codePoint,
         fontFamily: 'MaterialIcons',

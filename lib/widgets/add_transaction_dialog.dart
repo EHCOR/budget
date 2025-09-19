@@ -186,11 +186,12 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                         final command = provider.createAddTransactionCommand(transaction);
                         await undoRedoProvider.executeCommand(command);
 
-                        Navigator.pop(context);
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Transaction added successfully')),
-                        );
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Transaction added successfully')),
+                          );
+                        }
                       }
                     },
                     child: const Text('Add'),

@@ -16,7 +16,7 @@ class StorageService {
       final json = jsonEncode(transactions.map((t) => t.toJson()).toList());
       await prefs.setString(_transactionsKey, json);
     } catch (e) {
-      print('Error saving transactions: $e');
+      // Error saving transactions: $e
     }
   }
 
@@ -30,7 +30,7 @@ class StorageService {
       final list = jsonDecode(json) as List;
       return list.map((item) => Transaction.fromJson(item)).toList();
     } catch (e) {
-      print('Error loading transactions: $e');
+      // Error loading transactions: $e
       return [];
     }
   }
@@ -42,7 +42,7 @@ class StorageService {
       final json = jsonEncode(categories.map((c) => c.toJson()).toList());
       await prefs.setString(_categoriesKey, json);
     } catch (e) {
-      print('Error saving categories: $e');
+      // Error saving categories: $e
     }
   }
 
@@ -59,7 +59,7 @@ class StorageService {
       final list = jsonDecode(json) as List;
       return list.map((item) => Category.fromJson(item)).toList();
     } catch (e) {
-      print('Error loading categories: $e');
+      // Error loading categories: $e
       return Category.getDefaultCategories();
     }
   }
@@ -70,7 +70,7 @@ class StorageService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_settingsKey, jsonEncode(settings));
     } catch (e) {
-      print('Error saving settings: $e');
+      // Error saving settings: $e
     }
   }
 
@@ -88,7 +88,7 @@ class StorageService {
       }
       return jsonDecode(json) as Map<String, dynamic>;
     } catch (e) {
-      print('Error loading settings: $e');
+      // Error loading settings: $e
       return {
         'currencyCode': 'USD',
         'currencySymbol': '\$',
@@ -105,7 +105,7 @@ class StorageService {
       await prefs.remove(_categoriesKey);
       // Keep settings
     } catch (e) {
-      print('Error clearing data: $e');
+      // Error clearing data: $e
     }
   }
 
@@ -125,7 +125,7 @@ class StorageService {
 
       return jsonEncode(data);
     } catch (e) {
-      print('Error exporting data: $e');
+      // Error exporting data: $e
       return '';
     }
   }
@@ -156,7 +156,7 @@ class StorageService {
 
       return true;
     } catch (e) {
-      print('Error importing data: $e');
+      // Error importing data: $e
       return false;
     }
   }

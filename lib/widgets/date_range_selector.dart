@@ -107,7 +107,7 @@ class DateRangeSelector extends StatelessWidget {
 
   Widget _buildQuickOption(BuildContext context, String label, VoidCallback onTap) {
     return Material(
-      color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+      color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         onTap: onTap,

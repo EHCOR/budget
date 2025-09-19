@@ -166,7 +166,6 @@ class _CategoriesPageState extends State<CategoriesPage> {
     'elderly': Icons.elderly,
   };
 
-  static List<IconData> get availableIcons => availableIconsMap.values.toList();
 
   List<Category> _filterCategories(List<Category> categories) {
     if (_searchQuery.isEmpty) {
@@ -337,7 +336,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
                             margin: const EdgeInsets.only(bottom: 12),
                             child: ListTile(
                               leading: CircleAvatar(
-                                backgroundColor: category.color.withOpacity(0.2),
+                                backgroundColor: category.color.withValues(alpha: 0.2),
                                 child: Icon(category.icon, color: category.color),
                               ),
                               title: Text(
@@ -818,7 +817,7 @@ class _IconPickerWidgetState extends State<_IconPickerWidget> {
                             height: 40,
                             decoration: BoxDecoration(
                               color: widget.selectedIcon == icon
-                                  ? widget.selectedColor.withOpacity(0.2)
+                                  ? widget.selectedColor.withValues(alpha: 0.2)
                                   : Colors.transparent,
                               shape: BoxShape.circle,
                               border: widget.selectedIcon == icon

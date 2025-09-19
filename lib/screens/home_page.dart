@@ -30,12 +30,6 @@ class _HomePageState extends State<HomePage> {
     const TrendsPage(),
   ];
 
-  final List<String> _titles = [
-    'Dashboard',
-    'Transactions',
-    'Categories',
-    'Trends',
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -159,7 +153,7 @@ class _HomePageState extends State<HomePage> {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+          color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(

@@ -145,7 +145,7 @@ class _MonthlyCategoryChartState extends State<MonthlyCategoryChart> {
         enabled: true,
         handleBuiltInTouches: true,
         touchTooltipData: BarTouchTooltipData(
-          tooltipBgColor: Colors.blueGrey.withOpacity(0.9),
+          tooltipBgColor: Colors.blueGrey.withValues(alpha: 0.9),
           tooltipRoundedRadius: 8,
           tooltipPadding: const EdgeInsets.all(8),
           getTooltipItem: (group, groupIndex, rod, rodIndex) {
@@ -343,13 +343,13 @@ class _MonthlyCategoryChartState extends State<MonthlyCategoryChart> {
           color = baseColor;
         } else {
           // This is not the hovered section, reduce its opacity
-          color = baseColor.withOpacity(0.3);
+          color = baseColor.withValues(alpha: 0.3);
         }
       } else {
         // No hover, normal state
         color = isIncome
-            ? baseColor.withOpacity(0.8)
-            : baseColor.withOpacity(0.9);
+            ? baseColor.withValues(alpha: 0.8)
+            : baseColor.withValues(alpha: 0.9);
       }
 
       stackItems.add(BarChartRodStackItem(
@@ -581,9 +581,9 @@ class _MonthlyCategoryChartState extends State<MonthlyCategoryChart> {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: Colors.blue.withOpacity(0.1),
+        color: Colors.blue.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.blue.withOpacity(0.3)),
+        border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
