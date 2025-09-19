@@ -112,7 +112,7 @@ class TransactionDetailsPopup {
     if (context.mounted) {
       if (createTag == true) {
         await _createTagAndCategorize(context, transaction, category, provider);
-      } else {
+      } else if (createTag == false) {
         // Just update this single transaction
         final undoRedoProvider = Provider.of<UndoRedoProvider>(context, listen: false);
         final command = provider.createUpdateTransactionCategoryCommand(transaction.id, category.id);
@@ -124,6 +124,7 @@ class TransactionDetailsPopup {
           );
         }
       }
+      // If createTag is null (dialog was dismissed), do nothing
     }
   }
 
@@ -194,6 +195,17 @@ class TransactionDetailsPopup {
             content: Text(message),
             duration: const Duration(seconds: 4),
           ),
+        );
+      }
+    } else if (context.mounted) {
+      // User canceled tag creation, but still categorize this transaction
+      final undoRedoProvider = Provider.of<UndoRedoProvider>(context, listen: false);
+      final command = provider.createUpdateTransactionCategoryCommand(transaction.id, category.id);
+      await undoRedoProvider.executeCommand(command);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Category updated to ${category.name}')),
         );
       }
     }
@@ -347,13 +359,16 @@ class _TransactionDetailsContentState extends State<_TransactionDetailsContent> 
                       : null,
                     onTap: () async {
                       if (widget.transaction.categoryId == 'uncategorized') {
-                        Navigator.pop(context);
+                        // Don't close the popup yet - do it after the dialog
                         await TransactionDetailsPopup._handleUncategorizedSelection(
                           context,
                           widget.transaction,
                           category,
                           widget.provider
                         );
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                        }
                       } else {
                         final undoRedoProvider = Provider.of<UndoRedoProvider>(context, listen: false);
                         final command = widget.provider.createUpdateTransactionCategoryCommand(widget.transaction.id, category.id);

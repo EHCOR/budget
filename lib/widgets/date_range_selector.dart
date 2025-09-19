@@ -230,6 +230,36 @@ class _CustomDateRangePickerDialogState extends State<CustomDateRangePickerDialo
     }
   }
 
+  Future<void> _selectStartDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _startDate,
+      firstDate: DateTime(2000),
+      lastDate: _endDate,
+    );
+    if (picked != null) {
+      setState(() {
+        _startDate = picked;
+        _updateDateText();
+      });
+    }
+  }
+
+  Future<void> _selectEndDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _endDate,
+      firstDate: _startDate,
+      lastDate: DateTime.now(),
+    );
+    if (picked != null) {
+      setState(() {
+        _endDate = picked;
+        _updateDateText();
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
@@ -262,14 +292,20 @@ class _CustomDateRangePickerDialogState extends State<CustomDateRangePickerDialo
                 children: [
                   TextField(
                     controller: _startDateController,
-                    decoration: const InputDecoration(labelText: 'Start Date'),
+                    decoration: const InputDecoration(
+                      labelText: 'Start Date',
+                    ),
                     readOnly: true,
+                    onTap: _selectStartDate,
                   ),
                   const SizedBox(height: 16),
                   TextField(
                     controller: _endDateController,
-                    decoration: const InputDecoration(labelText: 'End Date'),
+                    decoration: const InputDecoration(
+                      labelText: 'End Date',
+                    ),
                     readOnly: true,
+                    onTap: _selectEndDate,
                   ),
                 ],
               ),
