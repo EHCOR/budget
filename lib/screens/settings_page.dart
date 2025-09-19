@@ -1,6 +1,10 @@
 // screens/settings_page.dart
+import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:universal_html/html.dart' as html;
 import '../providers/transaction_provider.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -181,90 +185,48 @@ class SettingsPage extends StatelessWidget {
   }
 
   void _exportData(BuildContext context, TransactionProvider provider) async {
-    // For web, we'll show the data as text that can be copied
     final exportData = await provider.exportDataAsJson();
+    final bytes = utf8.encode(exportData);
+    final date = DateTime.now().toIso8601String().substring(0, 10);
 
-    if (context.mounted) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Export Data'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('Copy this data to save your backup:'),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: SelectableText(
-                  exportData,
-                  maxLines: 5,
-                  style: const TextStyle(fontSize: 12),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Close'),
-            ),
-          ],
-        ),
+    if (kIsWeb) {
+      final blob = html.Blob([bytes]);
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      final anchor = html.AnchorElement(href: url)
+        ..setAttribute('download', 'budget_tracker_backup_$date.json')
+        ..click();
+      html.Url.revokeObjectUrl(url);
+    } else {
+      String? outputFile = await FilePicker.platform.saveFile(
+        dialogTitle: 'Please select an output file:',
+        fileName: 'budget_tracker_backup_$date.json',
       );
+
+      if (outputFile != null) {
+        // User selected a file
+      }
     }
   }
 
-  void _importData(BuildContext context, TransactionProvider provider) {
-    final controller = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Import Data'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Paste your backup data here:'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: controller,
-              maxLines: 5,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                hintText: 'Paste JSON data here...',
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (controller.text.isNotEmpty) {
-                final success = await provider.importDataFromJson(controller.text);
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(success ? 'Data imported successfully' : 'Failed to import data'),
-                    ),
-                  );
-                }
-              }
-            },
-            child: const Text('Import'),
-          ),
-        ],
-      ),
+  void _importData(BuildContext context, TransactionProvider provider) async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['json'],
     );
+
+    if (result != null && result.files.single.bytes != null) {
+      final bytes = result.files.single.bytes!;
+      final jsonString = utf8.decode(bytes);
+      final success = await provider.importDataFromJson(jsonString);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(success ? 'Data imported successfully' : 'Failed to import data'),
+          ),
+        );
+      }
+    }
   }
 
   void _confirmClearData(BuildContext context, TransactionProvider provider) {
