@@ -8,7 +8,6 @@ import 'dashboard_page.dart';
 import 'transactions_page.dart';
 import 'trends_page.dart';
 import 'categories_page.dart';
-import 'settings_page.dart';
 import '../widgets/add_transaction_dialog.dart';
 import '../widgets/csv_import_dialog.dart';
 import '../providers/transaction_provider.dart';

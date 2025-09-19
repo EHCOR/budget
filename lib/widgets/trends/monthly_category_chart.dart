@@ -486,7 +486,6 @@ class _MonthlyCategoryChartState extends State<MonthlyCategoryChart> {
     Map<String, Map<String, Map<String, double>>> data,
   ) {
     final spot = response.spot!;
-    if (spot == null) return null;
 
     final stackItemIndex = spot.touchedStackItemIndex;
 
@@ -523,10 +522,6 @@ class _MonthlyCategoryChartState extends State<MonthlyCategoryChart> {
     Map<String, Map<String, Map<String, double>>> data,
   ) {
     final spot = response.spot!;
-    if (spot == null) {
-      _clearHoverWithDebounce();
-      return;
-    }
 
     final groupIndex = spot.touchedBarGroupIndex;
     final rodIndex = spot.touchedRodDataIndex;
