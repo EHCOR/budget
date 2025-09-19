@@ -215,14 +215,29 @@ class _CsvImportDialogState extends State<CsvImportDialog> {
 
     try {
       final provider = Provider.of<TransactionProvider>(context, listen: false);
-      await provider.addTransactions(_parsedTransactions!);
+      final results = await provider.addTransactions(_parsedTransactions!);
 
       if (mounted) {
         Navigator.pop(context);
+
+        final importedCount = results['imported'] ?? 0;
+        final duplicateCount = results['duplicates'] ?? 0;
+
+        String message;
+        Color backgroundColor = Colors.green;
+
+        if (duplicateCount > 0) {
+          message = 'Imported $importedCount transactions, skipped $duplicateCount duplicate transactions';
+          backgroundColor = Colors.orange;
+        } else {
+          message = 'Imported $importedCount transactions';
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Successfully imported ${_parsedTransactions!.length} transactions'),
-            backgroundColor: Colors.green,
+            content: Text(message),
+            backgroundColor: backgroundColor,
+            duration: const Duration(seconds: 4),
           ),
         );
       }

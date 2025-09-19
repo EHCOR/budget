@@ -128,18 +128,64 @@ class TransactionProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Add multiple transactions (for import)
-  Future<void> addTransactions(List<Transaction> transactions) async {
+  // Add multiple transactions (for import) with duplicate detection
+  Future<Map<String, int>> addTransactions(List<Transaction> transactions) async {
+    final duplicateResults = _detectDuplicates(transactions);
+    final uniqueTransactions = duplicateResults['unique'] as List<Transaction>;
+    final duplicateCount = duplicateResults['duplicates'] as int;
+
     // Auto-categorize new transactions
-    for (var transaction in transactions) {
+    for (var transaction in uniqueTransactions) {
       if (transaction.categoryId == 'uncategorized') {
         transaction.categoryId = _findBestCategory(transaction.description);
       }
     }
 
-    _transactions.addAll(transactions);
+    _transactions.addAll(uniqueTransactions);
     await StorageService.saveTransactions(_transactions);
     notifyListeners();
+
+    return {
+      'imported': uniqueTransactions.length,
+      'duplicates': duplicateCount,
+      'total': transactions.length,
+    };
+  }
+
+  // Detect duplicate transactions
+  Map<String, dynamic> _detectDuplicates(List<Transaction> newTransactions) {
+    final List<Transaction> uniqueTransactions = [];
+    int duplicateCount = 0;
+
+    for (var newTransaction in newTransactions) {
+      if (!_isDuplicate(newTransaction)) {
+        uniqueTransactions.add(newTransaction);
+      } else {
+        duplicateCount++;
+      }
+    }
+
+    return {
+      'unique': uniqueTransactions,
+      'duplicates': duplicateCount,
+    };
+  }
+
+  // Check if a transaction is a duplicate
+  bool _isDuplicate(Transaction newTransaction) {
+    for (var existingTransaction in _transactions) {
+      if (_transactionsMatch(existingTransaction, newTransaction)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Check if two transactions match (considering them duplicates)
+  bool _transactionsMatch(Transaction existing, Transaction candidate) {
+    return existing.date.isAtSameMomentAs(candidate.date) &&
+           existing.amount == candidate.amount &&
+           existing.description == candidate.description;
   }
 
   // Update transaction
