@@ -1,6 +1,6 @@
 # Budget Tracker
 
-A Flutter application for tracking personal finances, visualizing spending patterns, and managing expenses.
+A mostly vibe-coded Flutter application for tracking personal finances, visualizing spending patterns, and managing expenses.
 
 ## Features
 
