@@ -4,7 +4,7 @@ A Flutter application for tracking personal finances, visualizing spending patte
 
 ## Features
 
-- **Transaction Management**: Import, view, and categorize your transactions
+- **Transaction Management**: Import, create, view, and categorize your transactions
 - **Budget Dashboard**: Visualize spending with interactive charts and summaries
 - **Smart Categorization**: Automatically categorize transactions based on description
 - **Filter & Search**: Find transactions by category, date, amount, or description
@@ -12,6 +12,7 @@ A Flutter application for tracking personal finances, visualizing spending patte
 - **Multiple Currencies**: Support for various currencies including USD, EUR, GBP, ZAR and more
 - **Light & Dark Mode**: Choose your preferred theme or use system default
 - **Data Management**: Backup and restore your transaction data
+- **State tracking**: Undo, Redo actions via buttons and hotkeys
 
 ## Getting Started
 
@@ -23,18 +24,6 @@ A Flutter application for tracking personal finances, visualizing spending patte
 
 - Flutter 3.0.0 or higher
 - Dart 2.17.0 or higher
-
-## Screenshots
-
-*Coming soon*
-
-## Upcoming Features
-
-- Manual transaction entry
-- Export data to CSV or PDF
-- Budget planning with alerts
-- Recurring transaction detection
-- Multi-device sync
 
 ## Version History
 
