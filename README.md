@@ -1,45 +1,49 @@
 # Budget Tracker
 
-A mostly vibe-coded Flutter application for tracking personal finances, visualizing spending patterns, and managing expenses.
+A vibe-coded personal finance tracker for managing transactions, visualizing spending patterns, and tracking budgets. Built with Next.js and TypeScript.
 
 ## Features
 
-- **Transaction Management**: Import, create, view, and categorize your transactions
-- **Budget Dashboard**: Visualize spending with interactive charts and summaries
-- **Smart Categorization**: Automatically categorize transactions based on description
-- **Filter & Search**: Find transactions by category, date, amount, or description
-- **Uncategorized Filter**: Quickly find and categorize uncategorized transactions
-- **Multiple Currencies**: Support for various currencies including USD, EUR, GBP, ZAR and more
-- **Light & Dark Mode**: Choose your preferred theme or use system default
-- **Data Management**: Backup and restore your transaction data
-- **State tracking**: Undo, Redo actions via buttons and hotkeys
+- **Transaction Management**: Import via CSV, create, view, and categorize transactions
+- **Budget Dashboard**: Interactive charts and spending summaries
+- **Smart Categorization**: Auto-categorize transactions based on description
+- **Filter & Search**: Filter by category, date, amount, or description
+- **Multiple Currencies**: USD, EUR, GBP, ZAR, and more
+- **Light & Dark Mode**: Theme toggle or system default
+- **Data Management**: Backup and restore transaction data
+- **Undo / Redo**: Full action history via buttons and hotkeys
 
 ## Getting Started
 
-1. Clone the repository
-2. Run `flutter pub get` to install dependencies
-3. Run `flutter run` to start the application
+```bash
+npm install
+npm run dev
+```
 
-## Requirements
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-- Flutter 3.0.0 or higher
-- Dart 2.17.0 or higher
+## Tech Stack
 
-## Version History
+- **Framework**: Next.js 14 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **Charts**: Recharts
+- **State**: Zustand
+- **Testing**: Vitest + React Testing Library
 
-### v1.1.0
-- Added light/dark theme support
-- Added filter for uncategorized transactions
-- Added framework for manual transaction entry
-- Fixed UI issues on different screen sizes
-- Performance improvements
+## Scripts
 
-### v1.0.0
-- Initial release
-- Transaction import from CSV
-- Category management
-- Dashboard visualization
+| Command | Description |
+|---|---|
+| `npm run dev` | Start development server |
+| `npm run build` | Production build |
+| `npm test` | Run tests |
+| `npm run lint` | Lint code |
+
+## Legacy
+
+The original Flutter implementation is preserved in the `flutter/` directory.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+MIT — see [LICENSE](LICENSE) for details.
