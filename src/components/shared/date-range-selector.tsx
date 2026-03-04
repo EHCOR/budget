@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Calendar } from 'lucide-react';
 import { useTransactionStore } from '@/lib/stores/transaction-store';
@@ -30,6 +30,17 @@ export function DateRangeSelector({ showTrendsOptions = false }: DateRangeSelect
   const [showCustom, setShowCustom] = useState(false);
   const [customStart, setCustomStart] = useState(format(startDate, 'yyyy-MM-dd'));
   const [customEnd, setCustomEnd] = useState(format(endDate, 'yyyy-MM-dd'));
+  const customRef = useRef<HTMLDivElement>(null);
+  const [customHeight, setCustomHeight] = useState<number | string>(0);
+
+  useEffect(() => {
+    if (showCustom) {
+      const h = customRef.current?.scrollHeight ?? 0;
+      setCustomHeight(h);
+    } else {
+      setCustomHeight(0);
+    }
+  }, [showCustom]);
 
   const presets = showTrendsOptions ? [...BASE_PRESETS, ...TRENDS_PRESETS] : BASE_PRESETS;
 
@@ -96,8 +107,12 @@ export function DateRangeSelector({ showTrendsOptions = false }: DateRangeSelect
         </button>
       </div>
 
-      {showCustom && (
-        <div className="mt-3 flex items-end gap-2 border-t pt-3 dark:border-gray-700">
+      <div
+        ref={customRef}
+        className="overflow-hidden transition-all duration-300 ease-in-out"
+        style={{ height: customHeight }}
+      >
+        <div className="flex items-end gap-2 border-t pb-1 pt-3 mt-3 dark:border-gray-700">
           <div className="flex-1">
             <label className="mb-1 block text-xs text-gray-500">Start</label>
             <input
@@ -123,7 +138,7 @@ export function DateRangeSelector({ showTrendsOptions = false }: DateRangeSelect
             Apply
           </button>
         </div>
-      )}
+      </div>
     </div>
   );
 }
