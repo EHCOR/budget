@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Area, ComposedChart } from 'recharts';
 import { useTransactionStore } from '@/lib/stores/transaction-store';
+import { useChartTheme } from '@/hooks/use-chart-theme';
 import { formatCompact, formatCurrency } from '@/lib/utils/currency';
 import type { MonthlyCategoryData } from '@/lib/types';
 
@@ -12,6 +13,7 @@ interface IncomeExpenseLineChartProps {
 
 export function IncomeExpenseLineChart({ data }: IncomeExpenseLineChartProps) {
   const { currencySymbol } = useTransactionStore();
+  const theme = useChartTheme();
 
   const { chartData, totalIncome, totalExpenses } = useMemo(() => {
     const months = Object.keys(data);
@@ -42,18 +44,18 @@ export function IncomeExpenseLineChart({ data }: IncomeExpenseLineChartProps) {
 
       <ResponsiveContainer width="100%" height={250}>
         <ComposedChart data={chartData}>
-          <XAxis dataKey="month" tick={{ fontSize: 10 }} />
-          <YAxis tickFormatter={(v) => formatCompact(v)} tick={{ fontSize: 10 }} />
+          <XAxis dataKey="month" tick={{ fontSize: 10, fill: theme.textColor }} stroke={theme.gridColor} />
+          <YAxis tickFormatter={(v) => formatCompact(v)} tick={{ fontSize: 10, fill: theme.textColor }} stroke={theme.gridColor} />
           <Tooltip
             formatter={(value: number, name: string) => [
               formatCurrency(value, currencySymbol),
               name,
             ]}
-            contentStyle={{ fontSize: '11px', borderRadius: '8px' }}
+            contentStyle={theme.tooltipStyle}
           />
-          <Legend wrapperStyle={{ fontSize: '10px' }} />
-          <Area type="monotone" dataKey="Income" fill="#4caf5030" stroke="#4caf50" strokeWidth={2} />
-          <Area type="monotone" dataKey="Expenses" fill="#f4433630" stroke="#f44336" strokeWidth={2} />
+          <Legend wrapperStyle={theme.legendStyle} />
+          <Area type="monotone" dataKey="Income" fill="#4caf50" fillOpacity={0.19} stroke="#4caf50" strokeWidth={2} />
+          <Area type="monotone" dataKey="Expenses" fill="#f44336" fillOpacity={0.19} stroke="#f44336" strokeWidth={2} />
           <Line type="monotone" dataKey="Net" stroke="#2196f3" strokeWidth={2} strokeDasharray="5 5" dot={false} />
         </ComposedChart>
       </ResponsiveContainer>

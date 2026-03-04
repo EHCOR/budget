@@ -14,7 +14,7 @@ interface TransactionItemProps {
 }
 
 export function TransactionItem({ transaction, category, currencySymbol, onClick, onDelete }: TransactionItemProps) {
-  const Icon = getIcon(category?.icon ?? 'HelpCircle');
+  const Icon = getIcon(category?.icon || 'Tag');
   const isIncome = transaction.type === TransactionType.Income;
 
   return (
@@ -24,9 +24,9 @@ export function TransactionItem({ transaction, category, currencySymbol, onClick
     >
       <div
         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
-        style={{ backgroundColor: `${category?.color ?? '#9e9e9e'}20` }}
+        style={{ backgroundColor: `${category?.color || '#9e9e9e'}20` }}
       >
-        <Icon size={18} style={{ color: category?.color ?? '#9e9e9e' }} />
+        <Icon size={18} style={{ color: category?.color || '#9e9e9e' }} />
       </div>
 
       <div className="min-w-0 flex-1">

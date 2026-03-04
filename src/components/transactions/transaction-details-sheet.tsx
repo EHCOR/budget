@@ -103,8 +103,8 @@ export function TransactionDetailsSheet({ transaction, onClose }: TransactionDet
               <span className="text-sm text-gray-500">Category</span>
               <div className="flex items-center gap-1.5">
                 {(() => {
-                  const CatIcon = getIcon(category?.icon ?? 'HelpCircle');
-                  return <CatIcon size={14} style={{ color: category?.color }} />;
+                  const CatIcon = getIcon(category?.icon || 'Tag');
+                  return <CatIcon size={14} style={{ color: category?.color || '#9e9e9e' }} />;
                 })()}
                 <span className="text-sm font-medium">{category?.name ?? 'Uncategorized'}</span>
               </div>

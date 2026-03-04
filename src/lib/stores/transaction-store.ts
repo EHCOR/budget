@@ -369,10 +369,10 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
         const cat = get().getCategoryById(catId);
         return {
           categoryId: catId,
-          categoryName: cat?.name ?? 'Unknown',
+          categoryName: cat?.name || 'Unknown',
           amount,
-          color: cat?.color ?? '#9e9e9e',
-          icon: cat?.icon ?? 'HelpCircle',
+          color: cat?.color || '#9e9e9e',
+          icon: cat?.icon || 'Tag',
         };
       })
       .sort((a, b) => b.amount - a.amount);
@@ -440,7 +440,7 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
   getCategoryColorsMap: () => {
     const colors: Record<string, string> = {};
     for (const cat of get().categories) {
-      colors[cat.name] = cat.color;
+      colors[cat.name] = cat.color || '#9e9e9e';
     }
     colors['Unknown'] = '#9e9e9e';
     return colors;

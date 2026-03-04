@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useTransactionStore } from '@/lib/stores/transaction-store';
+import { useChartTheme } from '@/hooks/use-chart-theme';
 import { formatCompact, formatCurrency } from '@/lib/utils/currency';
 import { calculateTrend } from '@/lib/services/statistics-service';
 import { TrendDirection, type MonthlyCategoryData } from '@/lib/types';
@@ -16,6 +17,7 @@ interface CategoryGrowthChartProps {
 export function CategoryGrowthChart({ data, hideIncomes }: CategoryGrowthChartProps) {
   const { getCategoryColorsMap, currencySymbol } = useTransactionStore();
   const colorMap = getCategoryColorsMap();
+  const theme = useChartTheme();
   const [txType, setTxType] = useState<'expense' | 'income'>('expense');
   const [showPercent, setShowPercent] = useState(false);
 
@@ -92,25 +94,26 @@ export function CategoryGrowthChart({ data, hideIncomes }: CategoryGrowthChartPr
 
       <ResponsiveContainer width="100%" height={250}>
         <LineChart data={chartData}>
-          <XAxis dataKey="month" tick={{ fontSize: 10 }} />
+          <XAxis dataKey="month" tick={{ fontSize: 10, fill: theme.textColor }} stroke={theme.gridColor} />
           <YAxis
             tickFormatter={(v) => showPercent ? `${v.toFixed(0)}%` : formatCompact(v)}
-            tick={{ fontSize: 10 }}
+            tick={{ fontSize: 10, fill: theme.textColor }}
+            stroke={theme.gridColor}
           />
           <Tooltip
             formatter={(value: number, name: string) => [
               showPercent ? `${value.toFixed(1)}%` : formatCurrency(value, currencySymbol),
               name,
             ]}
-            contentStyle={{ fontSize: '11px', borderRadius: '8px' }}
+            contentStyle={theme.tooltipStyle}
           />
-          <Legend wrapperStyle={{ fontSize: '10px' }} />
+          <Legend wrapperStyle={theme.legendStyle} />
           {topCategories.map((cat) => (
             <Line
               key={cat}
               type="monotone"
               dataKey={cat}
-              stroke={colorMap[cat] ?? '#9e9e9e'}
+              stroke={colorMap[cat] || '#9e9e9e'}
               strokeWidth={2}
               dot={{ r: 3 }}
             />

@@ -48,7 +48,14 @@ export function loadCategories(): Category[] {
   try {
     const json = storage.getItem(CATEGORIES_KEY);
     if (!json) return DEFAULT_CATEGORIES;
-    return JSON.parse(json) as Category[];
+    const categories = JSON.parse(json) as Category[];
+    // Ensure every category has valid color and icon fields
+    return categories.map((cat) => ({
+      ...cat,
+      color: cat.color || '#9e9e9e',
+      icon: cat.icon || 'Tag',
+      keywords: Array.isArray(cat.keywords) ? cat.keywords : [],
+    }));
   } catch {
     return DEFAULT_CATEGORIES;
   }

@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useTransactionStore } from '@/lib/stores/transaction-store';
+import { useChartTheme } from '@/hooks/use-chart-theme';
 import { formatCompact, formatCurrency } from '@/lib/utils/currency';
 import type { MonthlyCategoryData } from '@/lib/types';
 
@@ -14,6 +15,7 @@ interface MonthlyCategoryBarChartProps {
 export function MonthlyCategoryBarChart({ data, hideIncomes }: MonthlyCategoryBarChartProps) {
   const { getCategoryColorsMap, currencySymbol } = useTransactionStore();
   const colorMap = getCategoryColorsMap();
+  const theme = useChartTheme();
 
   const { chartData, expenseCategories } = useMemo(() => {
     const months = Object.keys(data);
@@ -49,22 +51,22 @@ export function MonthlyCategoryBarChart({ data, hideIncomes }: MonthlyCategoryBa
       <h3 className="mb-3 text-sm font-semibold">Monthly Category Spending</h3>
       <ResponsiveContainer width="100%" height={280}>
         <BarChart data={chartData}>
-          <XAxis dataKey="month" tick={{ fontSize: 10 }} />
-          <YAxis tickFormatter={(v) => formatCompact(v)} tick={{ fontSize: 10 }} />
+          <XAxis dataKey="month" tick={{ fontSize: 10, fill: theme.textColor }} stroke={theme.gridColor} />
+          <YAxis tickFormatter={(v) => formatCompact(v)} tick={{ fontSize: 10, fill: theme.textColor }} stroke={theme.gridColor} />
           <Tooltip
             formatter={(value: number, name: string) => [
               formatCurrency(value, currencySymbol),
               name,
             ]}
-            contentStyle={{ fontSize: '11px', borderRadius: '8px' }}
+            contentStyle={theme.tooltipStyle}
           />
-          <Legend wrapperStyle={{ fontSize: '10px' }} />
+          <Legend wrapperStyle={theme.legendStyle} />
           {expenseCategories.map((cat) => (
             <Bar
               key={cat}
               dataKey={cat}
               stackId="a"
-              fill={colorMap[cat] ?? '#9e9e9e'}
+              fill={colorMap[cat] || '#9e9e9e'}
               radius={[0, 0, 0, 0]}
             />
           ))}

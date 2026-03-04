@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useTransactionStore } from '@/lib/stores/transaction-store';
+import { useChartTheme } from '@/hooks/use-chart-theme';
 import { formatCompact, formatCurrency } from '@/lib/utils/currency';
 import { calculateAverage } from '@/lib/services/statistics-service';
 import type { MonthlyCategoryData } from '@/lib/types';
@@ -18,6 +19,7 @@ interface BudgetAnalysisChartProps {
 export function BudgetAnalysisChart({ data, hideIncomes }: BudgetAnalysisChartProps) {
   const { getCategoryColorsMap, currencySymbol } = useTransactionStore();
   const colorMap = getCategoryColorsMap();
+  const theme = useChartTheme();
   const [budgetType, setBudgetType] = useState<BudgetType>('historical');
 
   const { chartData, latestVariance } = useMemo(() => {
@@ -90,16 +92,16 @@ export function BudgetAnalysisChart({ data, hideIncomes }: BudgetAnalysisChartPr
 
       <ResponsiveContainer width="100%" height={250}>
         <BarChart data={chartData} layout="vertical">
-          <XAxis type="number" tickFormatter={(v) => formatCompact(v)} tick={{ fontSize: 10 }} />
-          <YAxis dataKey="category" type="category" tick={{ fontSize: 10 }} width={80} />
+          <XAxis type="number" tickFormatter={(v) => formatCompact(v)} tick={{ fontSize: 10, fill: theme.textColor }} stroke={theme.gridColor} />
+          <YAxis dataKey="category" type="category" tick={{ fontSize: 10, fill: theme.textColor }} width={80} stroke={theme.gridColor} />
           <Tooltip
             formatter={(value: number, name: string) => [
               formatCurrency(value, currencySymbol),
               name,
             ]}
-            contentStyle={{ fontSize: '11px', borderRadius: '8px' }}
+            contentStyle={theme.tooltipStyle}
           />
-          <Legend wrapperStyle={{ fontSize: '10px' }} />
+          <Legend wrapperStyle={theme.legendStyle} />
           <Bar dataKey="Actual" fill="#2196f3" radius={[0, 4, 4, 0]} />
           <Bar dataKey="Budget" fill="#9e9e9e" radius={[0, 4, 4, 0]} />
         </BarChart>
@@ -113,7 +115,7 @@ export function BudgetAnalysisChart({ data, hideIncomes }: BudgetAnalysisChartPr
         {latestVariance.map((v) => (
           <div key={v.category} className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-1.5">
-              <div className="h-2 w-2 rounded-full" style={{ backgroundColor: colorMap[v.category] ?? '#9e9e9e' }} />
+              <div className="h-2 w-2 rounded-full" style={{ backgroundColor: colorMap[v.category] || '#9e9e9e' }} />
               <span>{v.category}</span>
             </div>
             <span className={v.variance > 0 ? 'text-red-500' : 'text-green-500'}>

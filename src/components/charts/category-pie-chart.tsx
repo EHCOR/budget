@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { useChartTheme } from '@/hooks/use-chart-theme';
 import { formatCurrency } from '@/lib/utils/currency';
 import type { CategorySummary } from '@/lib/types';
 
@@ -13,6 +14,7 @@ interface CategoryPieChartProps {
 
 export function CategoryPieChart({ data, currencySymbol, onCategorySelect }: CategoryPieChartProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const theme = useChartTheme();
 
   if (data.length === 0) {
     return (
@@ -60,12 +62,7 @@ export function CategoryPieChart({ data, currencySymbol, onCategorySelect }: Cat
           </Pie>
           <Tooltip
             formatter={(value: number) => formatCurrency(value, currencySymbol)}
-            contentStyle={{
-              backgroundColor: 'var(--tooltip-bg, #fff)',
-              border: '1px solid #e5e7eb',
-              borderRadius: '8px',
-              fontSize: '12px',
-            }}
+            contentStyle={{ ...theme.tooltipStyle, fontSize: '12px' }}
           />
         </PieChart>
       </ResponsiveContainer>
