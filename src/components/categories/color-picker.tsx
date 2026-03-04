@@ -3,8 +3,15 @@
 import { cn } from '@/lib/utils/cn';
 
 const PRESET_COLORS = [
-  '#4caf50', '#ff9800', '#2196f3', '#f44336',
-  '#9c27b0', '#e91e63', '#009688', '#2e7d32',
+  // Row 1: Core
+  '#f44336', '#e91e63', '#9c27b0', '#673ab7',
+  '#3f51b5', '#2196f3', '#03a9f4', '#00bcd4',
+  // Row 2: Nature & warm
+  '#009688', '#4caf50', '#8bc34a', '#cddc39',
+  '#ffeb3b', '#ffc107', '#ff9800', '#ff5722',
+  // Row 3: Neutrals & extras
+  '#795548', '#607d8b', '#2e7d32', '#1565c0',
+  '#ad1457', '#6a1b9a', '#00838f', '#ef6c00',
 ];
 
 interface ColorPickerProps {
@@ -14,7 +21,7 @@ interface ColorPickerProps {
 
 export function ColorPicker({ selected, onSelect }: ColorPickerProps) {
   return (
-    <div className="flex gap-2">
+    <div className="grid grid-cols-8 gap-2">
       {PRESET_COLORS.map((color) => (
         <button
           key={color}
