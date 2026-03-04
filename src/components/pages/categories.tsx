@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { useTransactionStore } from '@/lib/stores/transaction-store';
 import { SearchInput } from '@/components/shared/search-input';
+import { DateRangeSelector } from '@/components/shared/date-range-selector';
 import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import { CategoryForm } from '@/components/categories/category-form';
 import { UndoRedoControls } from '@/components/layout/undo-redo-controls';
@@ -57,12 +58,14 @@ export function CategoriesPage() {
         </div>
       </div>
 
+      <DateRangeSelector />
+
       <SearchInput value={search} onChange={setSearch} placeholder="Search categories..." />
 
       <div className="space-y-2">
         {filteredCategories.map((cat) => {
           const Icon = getIcon(cat.icon);
-          const txs = store.getTransactionsByCategory(cat.id);
+          const txs = store.getFilteredTransactions().filter((t) => t.categoryId === cat.id);
           const total = txs.reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
           return (
